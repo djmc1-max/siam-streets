@@ -25,8 +25,9 @@
       card.dataset.player = p.id;
       card.style.setProperty('--ring', window.SiamTokens.COLORS[p.id % window.SiamTokens.COLORS.length]);
       card.innerHTML = '<span class="pc-token"></span><span class="pc-info"><span class="pc-name"></span><span class="pc-cash"></span></span>' +
-        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-jail" hidden>🔒</span></span>';
+        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-jail" hidden></span></span>';
       card.querySelector('.pc-token').textContent = p.icon;
+      card.querySelector('.pc-jail').replaceChildren(window.SiamIcons.el('jail'));
       card.querySelector('.pc-name').textContent = p.name + (p.isBot ? ' 🤖' : '');
       panel.appendChild(card);
     });
@@ -220,7 +221,28 @@
     $('btn-again').onclick = () => { $('winner').hidden = true; onAgain(); };
   }
 
+  // Phones (<= 600px): the controls live in a fixed bottom dock within thumb reach. Wider screens keep
+  // them in the board centre. They are moved (not cloned) so their state and listeners are kept.
+  function initDock() {
+    const dock = $('dock');
+    const phone = window.matchMedia('(max-width: 600px)');
+    const place = () => {
+      const target = phone.matches ? dock : document.querySelector('#board .board-center');
+      ['setup', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
+      measure();
+    };
+    // The dock's height tells the layout how much room to leave, so the board stays centred between
+    // the top bar and the dock even when the dock grows (e.g. the auction bid controls).
+    const measure = () => {
+      document.documentElement.style.setProperty('--dock-h', (phone.matches ? dock.offsetHeight : 0) + 'px');
+    };
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(dock);
+    phone.addEventListener('change', place);
+    place();
+  }
+
   function init(onStart) {
+    initDock();
     bindButtons();
     bindAuction();
     initSetup(onStart);

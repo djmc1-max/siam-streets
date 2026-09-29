@@ -30,7 +30,7 @@
     'Pai': [160, 800, 2200, 6000, 8000, 10000],
     'Ayutthaya': [180, 900, 2500, 7000, 8750, 10500],
     'Sukhothai': [180, 900, 2500, 7000, 8750, 10500],
-    'Kanchanaburi': [200, 1000, 3000, 7500, 9250, 11000],
+    'Lopburi': [200, 1000, 3000, 7500, 9250, 11000],
     'Hua Hin': [220, 1100, 3300, 8000, 9750, 12000],
     'Cha Am': [220, 1100, 3300, 8000, 9750, 12000],
     'Koh Samui': [240, 1200, 3600, 8500, 10250, 12500],
@@ -45,7 +45,7 @@
   const AIRPORT = (id, name) => ({ id, name, type: 'airport', price: 2000, icon: '✈️' });
   const UTILITY = (id) => ({ id, name: 'Thai Massage', type: 'utility', price: 1500, icon: '💆' });
   const SURPRISE = (id) => ({ id, name: 'Surprise', type: 'card', icon: '❓' });
-  const TREASURE = (id) => ({ id, name: 'Treasure', type: 'card', icon: '📦' });
+  const TREASURE = (id) => ({ id, name: 'Treasure', type: 'card', icon: '#chest' }); // '#name' = custom SVG icon
 
   // 40 squares in exact clockwise order, Start at top-left.
   const BOARD = [
@@ -53,13 +53,13 @@
     P(2, 'Khao San Rd', 'red', 600),
     TREASURE(3),
     P(4, 'Chatuchak', 'red', 600),
-    { id: 5, name: '10% Tax', type: 'tax', icon: '🧾', sub: '10% or ฿2,000' },
+    { id: 5, name: 'Income Tax', type: 'tax', icon: '🧾' },
     AIRPORT(6, 'Don Mueang'),
     P(7, 'Nana Plaza', 'orange', 1000),
     SURPRISE(8),
     P(9, 'Patpong', 'orange', 1000),
     P(10, 'Pattaya', 'orange', 1200),
-    { id: 11, name: 'In Prison', type: 'corner', icon: '🔒', sub: 'Just visiting' },
+    { id: 11, name: 'In Prison', type: 'corner', icon: '#jail', sub: 'Just visiting' },
     P(12, 'Koh Phi Phi', 'yellow', 1400),
     UTILITY(13),
     P(14, 'Koh Phangan', 'yellow', 1400),
@@ -73,13 +73,13 @@
     P(22, 'Ayutthaya', 'blue', 2200),
     SURPRISE(23),
     P(24, 'Sukhothai', 'blue', 2200),
-    P(25, 'Kanchanaburi', 'blue', 2400),
+    P(25, 'Lopburi', 'blue', 2400),
     AIRPORT(26, 'Chiang Mai Air'),
     P(27, 'Hua Hin', 'purple', 2600),
     P(28, 'Cha Am', 'purple', 2600),
     UTILITY(29),
     P(30, 'Koh Samui', 'purple', 2800),
-    { id: 31, name: 'Go To Prison', type: 'corner', icon: '🚔', sub: 'Do not pass Start' },
+    { id: 31, name: 'Go To Prison', type: 'corner', icon: '#jail', sub: 'Do not pass Start' },
     P(32, 'Silom', 'brown', 3000),
     P(33, 'Asok', 'brown', 3000),
     TREASURE(34),

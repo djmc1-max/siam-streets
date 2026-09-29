@@ -8,7 +8,8 @@
     const li = document.createElement('li');
     const i = document.createElement('span');
     i.className = 'feed-icon';
-    i.textContent = icon;
+    if (window.SiamIcons.isToken(icon)) i.appendChild(window.SiamIcons.fromToken(icon)); // '#chest', '#jail'
+    else i.textContent = icon;
     const t = document.createElement('span');
     t.textContent = text; // textContent: player names are user input
     li.append(i, t);

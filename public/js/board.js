@@ -15,7 +15,7 @@
   function isCorner(sq) { return sq.type === 'corner'; }
 
   function priceLabel(sq) {
-    if (sq.id === 5) return '10% / ฿2,000';
+    if (sq.id === 5) return '10%'; // the amount (lesser of 10% or ฿2,000) is worked out at landing and shown in the feed
     if (sq.price) return baht(sq.price);
     return '';
   }
@@ -44,7 +44,8 @@
     if (sq.icon) {
       const icon = document.createElement('div');
       icon.className = 'icon';
-      icon.textContent = sq.icon;
+      if (window.SiamIcons.isToken(sq.icon)) icon.appendChild(window.SiamIcons.fromToken(sq.icon));
+      else icon.textContent = sq.icon;
       body.appendChild(icon);
     }
     const name = document.createElement('div');

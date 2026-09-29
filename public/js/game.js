@@ -197,22 +197,22 @@
         break;
       case 'jailed':
         UI.setJailed(ev.playerId, true);
-        Feed.add('🔒', n + ' was sent to prison');
+        Feed.add('#jail', n + ' was sent to prison');
         await Tokens.jumpTo(ev.playerId, ev.to);
         break;
       case 'jailFine':
         UI.setJailed(ev.playerId, false);
-        Feed.add('🔒', n + ' paid ' + fmtBaht(ev.amount) + ' to leave prison');
+        Feed.add('#jail', n + ' paid ' + fmtBaht(ev.amount) + ' to leave prison');
         break;
       case 'jailFreed':
         UI.setJailed(ev.playerId, false);
-        Feed.add('🔓', ev.reason === 'doubles' ? n + ' rolled doubles and got out of prison' : n + ' served their time and is released');
+        Feed.add('#jail', ev.reason === 'doubles' ? n + ' rolled doubles and got out of prison' : n + ' served their time and is released');
         break;
       case 'jailStay':
-        Feed.add('🔒', n + ' stays in prison (attempt ' + ev.attempt + '/' + ev.max + ')');
+        Feed.add('#jail', n + ' stays in prison (attempt ' + ev.attempt + '/' + ev.max + ')');
         break;
       case 'cardStub':
-        Feed.add(ev.deck === 'Surprise' ? '❓' : '📦', n + ' landed on ' + ev.deck + ' (cards coming soon)');
+        Feed.add(ev.deck === 'Surprise' ? '❓' : '#chest', n + ' landed on ' + ev.deck + ' (cards coming soon)');
         break;
       case 'bankrupt':
         ev.released.forEach((sq) => UI.setOwner(sq, null));

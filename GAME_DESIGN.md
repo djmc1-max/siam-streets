@@ -47,6 +47,8 @@ Build this as a web application using:
 - Clean, modern, readable font
 - Rounded corners on property squares
 - Corner squares are larger than regular squares
+- Square icons: **Treasure** squares use a custom gold treasure-chest icon (lid slightly open, warm glow, coins spilling out); the **In Prison** and **Go To Prison** corners use a jail-bars icon (a dark cell with vertical steel bars). The same icons appear wherever those squares are referenced in the UI (activity feed, player cards).
+- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. The board is centered vertically in the space between the top bar (header, colour strip, players) and the dock, with equal spacing above and below. Tablet and desktop keep the controls in the center of the board.
 
 ---
 
@@ -60,7 +62,7 @@ Build this as a web application using:
 | 2 | Khao San Rd | Property | 🔴 Red |
 | 3 | Treasure | Card | — |
 | 4 | Chatuchak | Property | 🔴 Red |
-| 5 | 10% Tax | Tax | — |
+| 5 | Income Tax | Tax | — |
 | 6 | Don Mueang | Airport | — |
 | 7 | Nana Plaza | Property | 🟠 Orange |
 | 8 | Surprise | Card | — |
@@ -80,7 +82,7 @@ Build this as a web application using:
 | 22 | Ayutthaya | Property | 🔵 Blue |
 | 23 | Surprise | Card | — |
 | 24 | Sukhothai | Property | 🔵 Blue |
-| 25 | Kanchanaburi | Property | 🔵 Blue |
+| 25 | Lopburi | Property | 🔵 Blue |
 | 26 | Chiang Mai Air | Airport | — |
 | 27 | Hua Hin | Property | 🟣 Purple |
 | 28 | Cha Am | Property | 🟣 Purple |
@@ -107,7 +109,7 @@ Build this as a web application using:
 | 🟠 Orange | East Coast | Nana Plaza, Patpong, Pattaya | 3 |
 | 🟡 Yellow | South Islands | Koh Phi Phi, Koh Phangan, Krabi | 3 |
 | 🟢 Green | North | Chiang Rai, Chiang Mai, Pai | 3 |
-| 🔵 Blue | Central/Historic | Ayutthaya, Sukhothai, Kanchanaburi | 3 |
+| 🔵 Blue | Central/Historic | Ayutthaya, Sukhothai, Lopburi | 3 |
 | 🟣 Purple | Gulf South | Hua Hin, Cha Am, Koh Samui | 3 |
 | 🟤 Brown | Mid Bangkok | Silom, Asok, Thonglor | 3 |
 | 🩷 Pink | Premium Bangkok | Sathorn, Sukhumvit | 2 |
@@ -131,7 +133,7 @@ Build this as a web application using:
 | Pai | 🟢 | ฿2,000 | ฿160 | ฿800 | ฿2,200 | ฿6,000 | ฿8,000 | ฿10,000 |
 | Ayutthaya | 🔵 | ฿2,200 | ฿180 | ฿900 | ฿2,500 | ฿7,000 | ฿8,750 | ฿10,500 |
 | Sukhothai | 🔵 | ฿2,200 | ฿180 | ฿900 | ฿2,500 | ฿7,000 | ฿8,750 | ฿10,500 |
-| Kanchanaburi | 🔵 | ฿2,400 | ฿200 | ฿1,000 | ฿3,000 | ฿7,500 | ฿9,250 | ฿11,000 |
+| Lopburi | 🔵 | ฿2,400 | ฿200 | ฿1,000 | ฿3,000 | ฿7,500 | ฿9,250 | ฿11,000 |
 | Hua Hin | 🟣 | ฿2,600 | ฿220 | ฿1,100 | ฿3,300 | ฿8,000 | ฿9,750 | ฿12,000 |
 | Cha Am | 🟣 | ฿2,600 | ฿220 | ฿1,100 | ฿3,300 | ฿8,000 | ฿9,750 | ฿12,000 |
 | Koh Samui | 🟣 | ฿2,800 | ฿240 | ฿1,200 | ฿3,600 | ฿8,500 | ฿10,250 | ฿12,500 |
@@ -193,7 +195,7 @@ Build this as a web application using:
 
 | Square | Rule |
 |---|---|
-| 10% Tax (square 5) | Player pays 10% of current cash OR flat ฿2,000 — player chooses whichever is less |
+| Income Tax (square 5) | Player pays 10% of current cash OR flat ฿2,000 — whichever is less. The square itself shows only "10%"; the exact amount is worked out automatically when a player lands on it and appears in the activity feed |
 | Luxury Tax (square 39) | Player pays flat ฿1,000 |
 
 All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corner square** — when a player lands on it they collect everything in the pot.
@@ -386,8 +388,8 @@ A continuously scrolling log in the center of the board showing all game events 
 - 🎲 [Player] rolled doubles and goes again
 - 💰 [Player] paid ฿[amount] rent to [Player]
 - ❓ [Player] drew a Surprise card — [card text]
-- 📦 [Player] drew a Treasure card — [card text]
-- 🔒 [Player] was sent to prison
+- [treasure-chest icon] [Player] drew a Treasure card — [card text]
+- [jail-bars icon] [Player] was sent to prison
 - 🤝 [Player] and [Player] completed a trade
 - 🏠 [Player] built a house on [Property]
 - 🏨 [Player] built a hotel on [Property]
@@ -678,6 +680,7 @@ This is the very first screen a player sees when they open Siam Streets.
 
 ---
 
-*Document version: 2 — Ready for Claude Code*
+*Document version: 3 — Ready for Claude Code*
+*Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%"; treasure-chest and jail-bars icons; phone layout with a bottom dock (Section 3).*
 *Game: Siam Streets | siamstreets.io*
 *Slogan: Can you rule the streets of Siam?*
