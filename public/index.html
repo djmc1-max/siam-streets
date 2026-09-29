@@ -64,19 +64,50 @@
       <span class="header-logo">Siam Streets</span>
     </header>
 
-    <div class="board-wrap">
-      <div id="board" class="board" aria-label="Siam Streets board">
-        <div class="board-center">
-          <h2 class="logo logo--compact" aria-label="Siam Streets">
-            <span class="logo-word" aria-hidden="true">Siam</span>
-            <span class="logo-word" aria-hidden="true">Streets</span>
-            <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
-          </h2>
-          <div id="dice" class="dice" role="img" aria-label="Two dice"></div>
-          <ul id="feed" class="feed" aria-live="polite">
-            <li>🎲 Waiting for the game to start…</li>
-          </ul>
-          <button class="btn btn-primary btn-start" type="button" disabled>Start game</button>
+    <div class="game-main">
+      <aside id="players" class="players" aria-label="Players" hidden></aside>
+
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Siam Streets board">
+          <div id="token-layer" class="token-layer" aria-hidden="true"></div>
+          <div class="board-center">
+            <h2 class="logo logo--compact" aria-label="Siam Streets">
+              <span class="logo-word" aria-hidden="true">Siam</span>
+              <span class="logo-word" aria-hidden="true">Streets</span>
+              <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
+            </h2>
+            <div id="dice" class="dice" role="img" aria-label="Two dice"></div>
+            <ul id="feed" class="feed" aria-live="polite">
+              <li><span class="feed-icon">🎲</span><span>Choose your settings and start the game</span></li>
+            </ul>
+
+            <div id="setup" class="setup">
+              <label>Starting ฿ <select id="setup-cash"></select></label>
+              <label>Bots <select id="setup-bots"></select></label>
+              <span class="setup-level">Bot level: Easy</span>
+              <button id="btn-start" class="btn btn-primary btn-start" type="button">Start game</button>
+            </div>
+
+            <div id="actions" class="actions" hidden>
+              <button id="btn-roll" class="btn btn-primary" type="button" disabled>Roll Dice</button>
+              <button id="btn-fine" class="btn btn-secondary" type="button" hidden>Pay ฿500</button>
+              <button id="btn-buy" class="btn btn-primary" type="button" hidden>Buy</button>
+              <button id="btn-auction" class="btn btn-secondary" type="button" hidden>Auction</button>
+              <button id="btn-end" class="btn btn-secondary" type="button" disabled>End Turn</button>
+            </div>
+
+            <div id="auction" class="auction" hidden>
+              <div id="auction-title" class="auction-title"></div>
+              <div id="auction-status" class="auction-status"></div>
+              <div id="auction-controls" class="auction-controls" hidden>
+                <input id="bid-input" type="number" inputmode="numeric" step="1" min="1" aria-label="Your bid in Baht">
+                <button id="bid-plus10" class="btn btn-secondary" type="button">+10</button>
+                <button id="bid-plus100" class="btn btn-secondary" type="button">+100</button>
+                <button id="bid-submit" class="btn btn-primary" type="button">Bid</button>
+                <button id="bid-pass" class="btn btn-secondary" type="button">Pass</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -84,14 +115,30 @@
     <ul id="legend" class="legend" aria-label="Color groups"></ul>
 
     <div id="square-detail" class="square-detail" hidden></div>
+
+    <div id="winner" class="winner" role="dialog" aria-modal="true" aria-label="Game over" hidden>
+      <div class="winner-card">
+        <div class="winner-trophy" aria-hidden="true">🏆</div>
+        <div id="winner-token" class="winner-token" aria-hidden="true"></div>
+        <h2 id="winner-name"></h2>
+        <button id="btn-again" class="btn btn-primary" type="button">Another Game</button>
+      </div>
+    </div>
   </section>
 
   <button id="mute-btn" class="mute-btn" type="button" aria-label="Mute music" title="Mute music">🔊</button>
 
   <script src="js/data.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/bot.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/dice.js"></script>
   <script src="js/board.js"></script>
+  <script src="js/tokens.js"></script>
+  <script src="js/feed.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/main.js"></script>
 </body>

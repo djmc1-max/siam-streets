@@ -2,7 +2,7 @@
 (function () {
   const { BOARD, COLOR_GROUPS } = window.SiamData;
 
-  const baht = (n) => '฿' + n.toLocaleString('en-US');
+  const baht = (n) => window.SiamUtil.fmtBaht(n);
 
   // Board runs clockwise from the top-left corner (square 1) on an 11x11 grid.
   function placement(id) {

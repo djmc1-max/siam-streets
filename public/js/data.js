@@ -1,5 +1,9 @@
 // Single source of truth for board data. Mirrors GAME_DESIGN.md sections 4, 5, 6, 7, 8, 22.
-(function () {
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api; // Node (tests, Phase 4 server)
+  else root.SiamData = api;                                               // browser
+})(typeof self !== 'undefined' ? self : this, function () {
   const COLOR_GROUPS = {
     red:    { name: 'Bangkok Party',    color: '#e5484d' },
     orange: { name: 'East Coast',       color: '#f5892a' },
@@ -11,7 +15,33 @@
     pink:   { name: 'Premium Bangkok',  color: '#f472b6' }
   };
 
-  const P = (id, name, group, price) => ({ id, name, type: 'property', group, price });
+  // Rent by improvement level [base, 1 house, 2, 3, 4, hotel] — GAME_DESIGN.md section 6.
+  const RENTS = {
+    'Khao San Rd': [20, 100, 300, 900, 1600, 2500],
+    'Chatuchak': [40, 200, 600, 1800, 3200, 4500],
+    'Nana Plaza': [60, 300, 900, 2500, 4200, 6000],
+    'Patpong': [60, 300, 900, 2500, 4200, 6000],
+    'Pattaya': [80, 400, 1000, 3000, 4500, 7000],
+    'Koh Phi Phi': [100, 500, 1500, 4500, 6250, 7500],
+    'Koh Phangan': [100, 500, 1500, 4500, 6250, 7500],
+    'Krabi': [120, 600, 1800, 5000, 7000, 9000],
+    'Chiang Rai': [140, 700, 2000, 5500, 7500, 9500],
+    'Chiang Mai': [140, 700, 2000, 5500, 7500, 9500],
+    'Pai': [160, 800, 2200, 6000, 8000, 10000],
+    'Ayutthaya': [180, 900, 2500, 7000, 8750, 10500],
+    'Sukhothai': [180, 900, 2500, 7000, 8750, 10500],
+    'Kanchanaburi': [200, 1000, 3000, 7500, 9250, 11000],
+    'Hua Hin': [220, 1100, 3300, 8000, 9750, 12000],
+    'Cha Am': [220, 1100, 3300, 8000, 9750, 12000],
+    'Koh Samui': [240, 1200, 3600, 8500, 10250, 12500],
+    'Silom': [260, 1300, 3900, 9000, 11000, 12750],
+    'Asok': [260, 1300, 3900, 9000, 11000, 12750],
+    'Thonglor': [280, 1500, 4500, 10000, 12000, 14000],
+    'Sathorn': [350, 1750, 5000, 11000, 13000, 15000],
+    'Sukhumvit': [500, 2000, 6000, 14000, 17000, 20000]
+  };
+
+  const P = (id, name, group, price) => ({ id, name, type: 'property', group, price, rent: RENTS[name] });
   const AIRPORT = (id, name) => ({ id, name, type: 'airport', price: 2000, icon: '✈️' });
   const UTILITY = (id) => ({ id, name: 'Thai Massage', type: 'utility', price: 1500, icon: '💆' });
   const SURPRISE = (id) => ({ id, name: 'Surprise', type: 'card', icon: '❓' });
@@ -74,5 +104,5 @@
     { id: 'lotus',     name: 'Lotus Flower',  icon: '🌺', free: false, coins: 70 }
   ];
 
-  window.SiamData = { COLOR_GROUPS, BOARD, TOKENS };
-})();
+  return { COLOR_GROUPS, BOARD, TOKENS, RENTS };
+});

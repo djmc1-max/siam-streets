@@ -48,5 +48,45 @@
     die.querySelector('.orient').dataset.value = value;
   }
 
-  window.SiamDice = { createDie, setValue };
+  // Orientation that brings each value to the front; mirrors the .orient[data-value] rules in style.css.
+  const FINAL_ANGLES = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+  const rand = (n) => Math.floor(Math.random() * n);
+
+  // Spins and bounces one die, landing exactly on `value`.
+  function rollOne(die, value, index) {
+    const orient = die.querySelector('.orient');
+    const [fx, fy] = FINAL_ANGLES[value];
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = (reduced ? 200 : 950 + index * 200) / window.SiamUtil.speed;
+
+    orient.style.transition = 'none';
+    orient.dataset.value = value; // the CSS final orientation sits under the animation
+    if (!orient.animate) { orient.style.transition = ''; return Promise.resolve(); }
+
+    // Start a few whole turns away on each axis so it visibly tumbles, ending exactly on the face.
+    const ax = (2 + rand(2)) * 360 * (rand(2) ? 1 : -1);
+    const ay = (2 + rand(2)) * 360 * (rand(2) ? 1 : -1);
+    const spin = orient.animate([
+      { transform: 'rotateX(' + (fx + ax) + 'deg) rotateY(' + (fy + ay) + 'deg)' },
+      { transform: 'rotateX(' + fx + 'deg) rotateY(' + fy + 'deg)' }
+    ], { duration, easing: 'cubic-bezier(.2,.7,.25,1)' });
+
+    const hop = die.animate([
+      { transform: 'translateY(0)' },
+      { transform: 'translateY(calc(var(--u) * -7))', offset: 0.3 },
+      { transform: 'translateY(0)', offset: 0.55 },
+      { transform: 'translateY(calc(var(--u) * -2.2))', offset: 0.75 },
+      { transform: 'translateY(0)' }
+    ], { duration, easing: 'ease-out' });
+
+    return Promise.all([spin.finished, hop.finished]).then(() => { orient.style.transition = ''; }, () => { orient.style.transition = ''; });
+  }
+
+  // Rolls both dice to `values` ([d1, d2]); resolves when they have settled.
+  function roll(values) {
+    const dice = Array.from(document.querySelectorAll('#dice .die3d'));
+    return Promise.all(dice.map((d, i) => rollOne(d, values[i], i)));
+  }
+
+  window.SiamDice = { createDie, setValue, roll };
 })();

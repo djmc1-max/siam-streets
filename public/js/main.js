@@ -12,6 +12,7 @@
     name.textContent = player.name;
     badge.append(icon, name);
 
+    window.SiamGame.human = player;
     window.SiamBoard.renderBoard();
     landing.hidden = true;
     game.hidden = false;
@@ -23,6 +24,7 @@
   [4, 3].forEach((v) => diceEl.appendChild(window.SiamDice.createDie(v)));
 
   window.SiamAudio.init();
+  window.SiamUI.init((settings) => window.SiamGame.start(settings));
   window.SiamLanding.init(showGame);
 
   let resizeFrame = 0;
