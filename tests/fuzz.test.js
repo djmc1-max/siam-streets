@@ -39,6 +39,9 @@ function checkInvariants(g, label) {
   const held = [].concat(...st.players.map((p) => p.jailCards));
   assert.deepEqual(st.decks.surprise.slice().sort(), CARDS.surprise.map((c) => c.id).sort(), label + ': Surprise deck changed');
   assert.deepEqual(st.decks.treasure.concat(held).sort(), CARDS.treasure.map((c) => c.id).sort(), label + ': Treasure cards lost or duplicated');
+  if (st.trade) {
+    assert.ok(st.trade.from !== st.trade.to && !st.players[st.trade.from].bankrupt && !st.players[st.trade.to].bankrupt, label + ': bad pending trade');
+  }
   st.debts.forEach((d) => {
     assert.ok(d.amount > 0, label + ': empty debt left in the log');
     assert.ok(!st.players[d.debtor].bankrupt, label + ': debt of a bankrupt player');
@@ -49,6 +52,41 @@ function checkInvariants(g, label) {
   assert.ok(st.songkranPot >= 0);
   assert.ok(!st.players[st.current].bankrupt || st.phase === 'over', label + ': current player is bankrupt');
   assert.ok(['roll', 'action', 'auction', 'end', 'debt', 'over'].includes(st.phase));
+}
+
+function randomSide(g, pid, rnd) {
+  const st = g.state;
+  const p = st.players[pid];
+  return {
+    props: Rules.ownedIds(st, pid).filter((id) => rnd() < 0.3),
+    cash: rnd() < 0.5 ? Math.floor(rnd() * Math.min(p.cash, 2000)) : 0,
+    cards: p.jailCards.filter(() => rnd() < 0.5)
+  };
+}
+
+// A random offer from the current player to a random other player (only if it is valid).
+function tryPropose(g, rnd) {
+  const me = g.state.current;
+  const others = g.state.players.filter((q) => !q.bankrupt && q.id !== me);
+  if (!others.length) return false;
+  const to = others[Math.floor(rnd() * others.length)].id;
+  const give = randomSide(g, me, rnd), get = randomSide(g, to, rnd);
+  if (!Rules.checkTrade(g.state, me, to, give, get).ok) return false;
+  g.proposeTrade(me, to, give, get);
+  return true;
+}
+
+// The receiver's random answer: accept / decline / counter (a bad answer is turned into a decline).
+function respond(g, rnd, stats) {
+  const t = g.state.trade;
+  const r = rnd();
+  if (r < 0.45) {
+    if (Rules.checkTrade(g.state, t.from, t.to, t.give, t.get).ok) { g.respondTrade(t.to, 'accept'); stats.trades++; return; }
+  } else if (r >= 0.75 && t.round < 6) {
+    const give = randomSide(g, t.to, rnd), get = randomSide(g, t.from, rnd);
+    if (Rules.checkTrade(g.state, t.to, t.from, give, get).ok) { g.respondTrade(t.to, { counter: { give, get } }); return; }
+  }
+  g.respondTrade(t.to, 'decline');
 }
 
 // One random property-management action, if any is legal for the current player.
@@ -68,6 +106,7 @@ function tryManage(g, rnd) {
 
 test('fuzz: 300 random games never throw and always keep the invariants', () => {
   let finished = 0, built = 0, mortgaged = 0, cards = 0, debtsSeen = 0, debtPhases = 0;
+  const stats = { trades: 0 };
   for (let seed = 1; seed <= 300; seed++) {
     const rnd = mulberry32(seed);
     const n = 2 + Math.floor(rnd() * 5);
@@ -76,7 +115,9 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
       const a = g.availableActions();
       const p = g.state.players[a.actor];
       const label = 'seed ' + seed + ' step ' + step;
-      if (g.state.phase === 'auction') {
+      if (g.state.trade) {
+        respond(g, rnd, stats);
+      } else if (g.state.phase === 'auction') {
         const auc = g.state.auction;
         const max = Math.min(p.cash, 3000);
         if (rnd() < 0.5 && max > auc.highBid) g.bid(p.id, auc.highBid + 1 + Math.floor(rnd() * (max - auc.highBid)));
@@ -90,6 +131,8 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
         if (rnd() < 0.08 || (sellable === undefined && mortgageable === undefined)) { g.declareBankruptcy(pid); debtsSeen++; }
         else if (sellable !== undefined) g.sellBuilding(pid, sellable);
         else g.mortgage(pid, mortgageable);
+      } else if (a.canTrade && rnd() < 0.08 && tryPropose(g, rnd)) {
+        // an offer is now pending; the next loop iteration answers it
       } else if (a.canManage && rnd() < 0.3 && tryManage(g, rnd)) {
         if (Object.keys(g.state.levels).length) built++;
         if (Object.keys(g.state.mortgaged).length) mortgaged++;
@@ -110,5 +153,5 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
     }
   }
   assert.ok(finished > 0, 'at least some random games should reach a winner');
-  assert.ok(cards > 100 && built > 50 && mortgaged > 50 && debtPhases > 50, 'the fuzz must actually exercise cards, buildings, mortgages and debts (' + [cards, built, mortgaged, debtPhases] + ')');
+  assert.ok(cards > 100 && built > 50 && mortgaged > 50 && debtPhases > 50 && stats.trades > 100, 'the fuzz must actually exercise cards, buildings, mortgages, debts and trades (' + [cards, built, mortgaged, debtPhases, stats.trades] + ')');
 });

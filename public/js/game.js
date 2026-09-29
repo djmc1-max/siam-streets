@@ -74,6 +74,8 @@
       case 'buy': return e.buy();
       case 'auction': return e.declineToAuction();
       case 'bankrupt': return e.declareBankruptcy(actor.id);
+      case 'trade': return e.proposeTrade(actor.id, action.to, action.give, action.get);
+      case 'tradeReply': return e.respondTrade(actor.id, action.reply);
       case 'mortgage': return e.mortgage(actor.id, action.square);
       case 'unmortgage': return e.unmortgage(actor.id, action.square);
       case 'build': return e.build(actor.id, action.square);
@@ -89,6 +91,7 @@
   async function humanChoose(actor) {
     const e = SiamGame.engine;
     const st = e.state;
+    if (st.trade) return window.SiamTrade.respond(st.trade);     // an offer (or counter-offer) is waiting for you
     if (st.phase === 'auction') {
       const a = st.auction;
       return UI.awaitBid({
@@ -109,6 +112,8 @@
     UI.idle();
     await sleep(bot.thinkMs);
     const av = e.availableActions();
+
+    if (e.state.trade) return { type: 'tradeReply', reply: bot.decideTrade(e, actor.id, e.state.trade, SiamGame.botRng) };
 
     // Easy bots tidy their properties at most three times a turn, before rolling or before ending the turn
     if ((e.state.phase === 'roll' || e.state.phase === 'end') && av.canManage) {
@@ -248,6 +253,22 @@
       case 'sold':
         UI.setLevel(ev.square, ev.level);
         Feed.add('💵', n + ' sold a ' + (ev.hotel ? 'hotel' : 'house') + ' on ' + sqName(ev.square) + ' for ' + fmtBaht(ev.refund));
+        break;
+      case 'tradeProposed':
+        Feed.add('🤝', nameOf(ev.from) + ' offers ' + nameOf(ev.to) + ' a trade: gives ' + window.SiamTrade.describe(ev.give) + ' for ' + window.SiamTrade.describe(ev.get));
+        break;
+      case 'tradeCountered':
+        Feed.add('🤝', nameOf(ev.from) + ' counter-offers ' + nameOf(ev.to) + ': gives ' + window.SiamTrade.describe(ev.give) + ' for ' + window.SiamTrade.describe(ev.get));
+        break;
+      case 'tradeDeclined':
+        Feed.add('🤝', nameOf(ev.to) + ' declined ' + nameOf(ev.from) + "'s offer");
+        break;
+      case 'tradeCompleted':
+        ev.give.props.forEach((sq) => UI.setOwner(sq, ev.to));
+        ev.get.props.forEach((sq) => UI.setOwner(sq, ev.from));
+        ev.jailCards.forEach((count, id) => UI.setJailCards(id, count));
+        Feed.add('🤝', nameOf(ev.from) + ' and ' + nameOf(ev.to) + ' completed a trade');
+        Feed.add('🤝', nameOf(ev.from) + ' gave ' + window.SiamTrade.describe(ev.give) + ' and got ' + window.SiamTrade.describe(ev.get));
         break;
       case 'debtLogged':
         Feed.add('⚠️', n + ' owes ' + fmtBaht(ev.amount) + ' to ' + who(ev.creditor) + ' — debt pending');

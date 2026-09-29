@@ -56,6 +56,8 @@
       auction: null,
       debts: [],           // { id, debtor, creditor: playerId | 'bank' | 'pot', amount (still owed), reason }
       debtSeq: 0,
+      trade: null,         // a pending offer: { id, from, to, give, get, round } — `to` must answer it
+      tradeSeq: 0,
       afterDebt: null,     // what to do once the current player's debts are cleared: 'start' (roll) or 'landing'
       winner: null
     };
@@ -368,6 +370,7 @@
 
     // ---------- public actions ----------
     function assertPhase(phase) {
+      if (state.trade) throw new Error('A trade offer is waiting for an answer');
       if (state.phase !== phase) throw new Error('Not allowed in phase "' + state.phase + '" (needs "' + phase + '")');
     }
 
@@ -429,6 +432,7 @@
 
     // Property management (mortgage / build / sell): your own turn, any step of it except auctions.
     function assertCanManage(pid) {
+      if (state.trade) throw new Error('A trade offer is waiting for an answer');
       if (pid !== state.current) throw new Error('You can only manage properties on your own turn');
       if (['roll', 'action', 'end', 'debt'].indexOf(state.phase) === -1) throw new Error('Cannot manage properties now (' + state.phase + ')');
     }
@@ -478,9 +482,59 @@
       return list;
     };
 
+    // ---------- trading (Section 19) ----------
+    const MAX_TRADE_ROUNDS = 6;
+    const cloneSide = (s) => ({ props: s.props.slice(), cash: s.cash, cards: s.cards.slice() });
+
+    // Any player offers properties + cash (+ jail cards) for the other's, in either direction.
+    game.proposeTrade = function (pid, toId, give, get) {
+      assertCanManage(pid);
+      const c = Rules.checkTrade(state, pid, toId, give, get);
+      if (!c.ok) throw new Error(c.reason);
+      const list = [];
+      state.trade = { id: ++state.tradeSeq, from: pid, to: toId, give: cloneSide(give), get: cloneSide(get), round: 1 };
+      emit(list, 'tradeProposed', { tradeId: state.trade.id, from: pid, to: toId, give: cloneSide(give), get: cloneSide(get) });
+      return list;
+    };
+
+    // The receiver answers: 'accept', 'decline', or { counter: { give, get } } (Negotiate). A counter-offer
+    // swaps the roles: the receiver becomes the proposer and the original proposer must now answer.
+    game.respondTrade = function (pid, reply) {
+      const t = state.trade;
+      if (!t) throw new Error('No trade offer is waiting');
+      if (pid !== t.to) throw new Error('This offer is not for you');
+      const list = [];
+      if (reply === 'accept') {
+        const c = Rules.checkTrade(state, t.from, t.to, t.give, t.get);
+        if (!c.ok) throw new Error(c.reason);
+        t.give.props.forEach((id) => { state.owners[id] = t.to; });
+        t.get.props.forEach((id) => { state.owners[id] = t.from; });
+        state.players[t.from].cash += t.get.cash - t.give.cash;
+        state.players[t.to].cash += t.give.cash - t.get.cash;
+        t.give.cards.forEach((id) => { const a = state.players[t.from].jailCards; a.splice(a.indexOf(id), 1); state.players[t.to].jailCards.push(id); });
+        t.get.cards.forEach((id) => { const a = state.players[t.to].jailCards; a.splice(a.indexOf(id), 1); state.players[t.from].jailCards.push(id); });
+        state.trade = null;
+        emit(list, 'tradeCompleted', { tradeId: t.id, from: t.from, to: t.to, give: t.give, get: t.get, jailCards: state.players.map((q) => q.jailCards.length) });
+      } else if (reply === 'decline') {
+        state.trade = null;
+        emit(list, 'tradeDeclined', { tradeId: t.id, from: t.from, to: t.to });
+      } else if (reply && reply.counter) {
+        if (t.round >= MAX_TRADE_ROUNDS) throw new Error('Too many counter-offers — accept or decline');
+        const { give, get } = reply.counter;
+        const c = Rules.checkTrade(state, pid, t.from, give, get);
+        if (!c.ok) throw new Error(c.reason);
+        state.trade = { id: t.id, from: pid, to: t.from, give: cloneSide(give), get: cloneSide(get), round: t.round + 1 };
+        emit(list, 'tradeCountered', { tradeId: t.id, from: pid, to: t.from, give: cloneSide(give), get: cloneSide(get), round: t.round + 1 });
+      } else {
+        throw new Error('Answer with accept, decline or a counter-offer');
+      }
+      return list;
+    };
+
     // Section 35: Declare Bankruptcy. Also how a hopeless debtor ends it (Sections 16/17): remaining cash goes
     // to the creditor, everything else goes back to the bank, and the turn passes on.
     game.declareBankruptcy = function (pid) {
+      if (state.trade) throw new Error('A trade offer is waiting for an answer');
       if (pid !== state.current) throw new Error('You can only declare bankruptcy on your own turn');
       if (['roll', 'action', 'end', 'debt'].indexOf(state.phase) === -1) throw new Error('Cannot declare bankruptcy now (' + state.phase + ')');
       const list = [];
@@ -573,17 +627,19 @@
       const p = current();
       const sq = state.pending ? BOARD[state.pending - 1] : null;
       return {
-        actor: state.phase === 'auction' ? state.auction.turn : state.current,
+        actor: state.trade ? state.trade.to : state.phase === 'auction' ? state.auction.turn : state.current,
+        trade: state.trade,
+        canTrade: !state.trade && ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
         canRoll: state.phase === 'roll',
         canPayFine: state.phase === 'roll' && p.jailed && p.cash >= JAIL_FINE,
         canUseJailCard: state.phase === 'roll' && p.jailed && p.jailCards.length > 0,
         canBuy: state.phase === 'action' && !!sq && p.cash >= sq.price,
         canAuction: state.phase === 'action' && !!sq,
         canEndTurn: state.phase === 'end',
-        canManage: ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
+        canManage: !state.trade && ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
         inDebt: state.phase === 'debt',
         debtOwed: debtTotal(state.current),
-        canBankrupt: ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
+        canBankrupt: !state.trade && ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
         canBid: state.phase === 'auction'
       };
     };
@@ -591,7 +647,7 @@
     // Every action that can change anyone's cash ends by sweeping cash into open debts and, if the current
     // player's last debt just cleared, letting the interrupted turn continue.
     ['roll', 'payJailFine', 'useJailCard', 'buy', 'declineToAuction', 'bid', 'pass', 'endTurn',
-     'mortgage', 'unmortgage', 'build', 'sellBuilding', 'declareBankruptcy'].forEach((name) => {
+     'mortgage', 'unmortgage', 'build', 'sellBuilding', 'declareBankruptcy', 'proposeTrade', 'respondTrade'].forEach((name) => {
       const action = game[name];
       game[name] = function () {
         const list = action.apply(this, arguments);

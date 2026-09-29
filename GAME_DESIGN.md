@@ -48,7 +48,7 @@ Build this as a web application using:
 - Rounded corners on property squares
 - Corner squares are larger than regular squares
 - Square icons: **Treasure** squares use a custom gold treasure-chest icon (lid slightly open, warm glow, coins spilling out); the **In Prison** and **Go To Prison** corners use a jail-bars icon (a dark cell with vertical steel bars). The same icons appear wherever those squares are referenced in the UI (activity feed, player cards).
-- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. On **tall phones** (720px or taller) the space above the board becomes a large activity feed (the feed moves out of the board center; the logo and dice grow to fill it), so players can see many more recent events; the board sits directly above the dock. On **shorter phones** the feed stays in the board center and the board is centered vertically between the top bar (header, colour strip, players) and the dock with equal spacing above and below. Tablet and desktop keep the feed and the controls in the center of the board.
+- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. On **tall phones** (720px or taller) the space above the board becomes a large activity feed (the feed moves out of the board center; the logo and dice grow to fill it), so players can see many more recent events; the board sits directly above the dock. On **shorter phones** the feed stays in the board center and the board is centered vertically between the top bar (header, colour strip, players) and the dock with equal spacing above and below. Tablet and desktop keep the feed and the controls in the center of the board.
 
 ---
 
@@ -117,6 +117,8 @@ Build this as a web application using:
 ---
 
 ## 6. PROPERTY PRICING
+
+**Rent rules:** the **Rent** column is the base rent for an unimproved property. If one player owns **every property of a colour group**, the base rent of each unimproved property in that group is **doubled**. Once a property has houses or a hotel, its rent is exactly the value in the 1 House … Hotel columns (no further doubling). A mortgaged property collects no rent. Airports and Thai Massage rents (Sections 7, 8) are never doubled.
 
 | Property | Color | Buy Price | Rent | 1 House | 2 Houses | 3 Houses | 4 Houses | Hotel |
 |---|---|---|---|---|---|---|---|---|
@@ -188,6 +190,9 @@ Build this as a web application using:
 - Must build evenly across the group
 - No limit on number of houses or hotels
 - Sell houses back to bank at 50% of build cost
+- Levels: 1-4 houses, then a hotel (the 5th step). A hotel **replaces the 4 houses**; it costs the hotel price above, and selling it refunds 50% of the hotel price and leaves 4 houses
+- Building and selling are one step at a time and **even**: build on the property with the fewest buildings, sell from the one with the most
+- No building on a colour group that has a mortgaged property; cash cannot go negative to build
 
 ---
 
@@ -232,7 +237,7 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 - Player goes to jail when: landing on Go To Prison, rolling doubles 3 times in a row, or drawing a Police Checkpoint Surprise card
 - To get out of jail:
   - Pay ฿500 fine
-  - Use a Get Out of Jail Free card
+  - Use a Get Out of Jail Free card (a **Use card** button appears only while you are in prison and hold one)
   - Roll doubles within 3 turns
 - If player fails to roll doubles after 3 turns — released for free
 - While in jail player still collects rent from their properties
@@ -253,13 +258,16 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 - Mortgaged properties earn zero rent
 - To unmortgage — pay back the 50% to the bank
 - Bankrupt player's properties return to bank regardless of mortgage status
+- A property in a colour group that has houses cannot be mortgaged until every house in that group is sold
+- Mortgaged airports and Thai Massage squares still count toward how many the owner has; only the mortgaged square itself collects nothing
+- Mortgage and unmortgage are done from the **Properties** manager (Section 35)
 
 ---
 
 ## 16. BANKRUPTCY RULES
 
 - If a player owes more than they can pay:
-  - Available cash is automatically transferred to the creditor
+  - Available cash is automatically transferred to the creditor (see Section 17: this now happens first, and the rest becomes a debt)
   - All remaining properties return to the bank — available for purchase again naturally
   - Bankrupt player is eliminated from the game
   - Bankrupt player becomes a spectator automatically
@@ -271,7 +279,12 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 ## 17. DEBT SYSTEM
 
 - If a player owes money but cannot pay immediately:
-  - Debt is logged and shown clearly on screen
+  - **All of their available cash is transferred to the creditor at once** (partial payment); only the remainder is logged as a debt
+  - Cash raised later (mortgages, sold houses, trades, rent received) goes straight to the oldest open debt
+  - While in debt the player cannot roll or end their turn ("debt phase"); when the last debt clears, the interrupted turn continues (including a pending double)
+  - A debt to a player who then goes bankrupt is cancelled; a bankrupt debtor's debts end with them
+  - Nobody is bankrupted automatically: a hopeless debtor must **Declare Bankruptcy** (bots do it automatically when they have nothing left to sell or mortgage)
+  - Debt is logged and shown clearly on screen (banner + a warning badge on the player's card)
   - Game continues normally for other players
   - When it is the indebted player's turn they MUST resolve the debt before rolling
   - Resolution options: sell houses, mortgage a property, make a trade, or declare bankruptcy
@@ -299,10 +312,18 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 - Receiver options: Accept / Decline / Negotiate
 - If Negotiate — counter offer can be made
 - All completed trades logged in live activity feed
+- An offer contains, for each side: any number of properties, cash, and Get Out of Jail Free cards. A gift (one side empty) is allowed; a completely empty offer is not
+- Neither side may offer more cash than they hold; properties in a colour group that has houses cannot be traded until the houses are sold; mortgaged properties can be traded and stay mortgaged
+- The offer is re-checked at the moment it is answered
+- **Negotiate** sends a counter-offer: the roles swap and the original proposer must Accept, Decline or Negotiate again (at most 6 rounds)
+- Trades can be proposed on your own turn (any step of it, including while in debt); "any time" becomes real-time in multiplayer (Phase 4)
+- Easy bots answer offers by comparing values (mortgaged property counts half), refuse to hand anyone a full colour set, and may counter by asking for extra cash; they never start a trade
 
 ---
 
 ## 20. SURPRISE CARDS — 10 Cards (shuffled randomly)
+
+*How cards work (Sections 20 and 21):* both decks are shuffled at the start of the game. A drawn card is shown on screen (the human player taps OK before its effect is applied; bots' cards continue automatically after a moment) and its effect is then applied automatically. Used cards go to the bottom of their deck. Fines and fees are paid to the bank (only tax squares feed the Songkran pot). "Collect from each player" takes ฿200 from every other active player; anyone who cannot pay it becomes a debtor (Section 17). "Miss one turn" skips your **next** turn; the rest of the current turn is unaffected.
 
 | # | Card Text | Effect |
 |---|---|---|
@@ -397,6 +418,8 @@ A continuously scrolling log in the center of the board showing all game events 
 - ✅ [Player] resolved their debt
 - 💀 [Player] went bankrupt
 - 🎉 [Player] wins the game!
+
+Other events in the same style: `🏦` mortgaged / unmortgaged, `💵` sold a house or hotel, `💵` paid toward a debt, `🆓` keeps / used a Get Out of Jail Free card, `🚫` misses a turn, `🤝` trade offered / countered / declined (a completed trade also lists what moved), `🔨` auction events, `🧾` tax, `💦` Songkran pot.
 
 ---
 
@@ -573,13 +596,16 @@ Display as Coming Soon at launch. Rules visible to players:
 | Roll Dice | Roll both dice — only active on your turn |
 | Buy | Purchase property you landed on |
 | Auction | Decline to buy — triggers auction |
-| Build | Buy houses/hotels on owned complete groups |
-| Mortgage | Mortgage a property for 50% value |
-| Unmortgage | Pay back mortgage |
-| Trade | Initiate trade with another player |
-| Declare Bankruptcy | Voluntarily go bankrupt |
+| Build | Buy houses/hotels on owned complete groups — in the **Properties** manager (one button per property, with its cost; **Sell** gives the 50% refund) |
+| Mortgage | Mortgage a property for 50% value — in the Properties manager |
+| Unmortgage | Pay back mortgage — in the Properties manager |
+| Trade | Initiate trade with another player (opens the trade dialog; incoming offers show Accept / Decline / Negotiate) |
+| Declare Bankruptcy | Voluntarily go bankrupt — always asks for confirmation; also offered in the debt banner |
+| Use card | Use a Get Out of Jail Free card (only while in prison and holding one) |
 | Vote Kick | Initiate vote to remove a player |
 | End Turn | End your turn manually |
+
+The **Properties** and **Trade** buttons sit beside the main buttons (in the board centre on larger screens, in the bottom dock on phones). Property management is hidden during auctions.
 
 ---
 
@@ -680,7 +706,8 @@ This is the very first screen a player sees when they open Siam Streets.
 
 ---
 
-*Document version: 3 — Ready for Claude Code*
+*Document version: 4 — Ready for Claude Code*
 *Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%" (tap card shows the full rule); treasure-chest and jail-bars icons; phone layout with a bottom dock and, on tall phones, a large activity feed above the board (Section 3).*
+*Changes in v4 (Phase 3): full-set rent doubling (Section 6); building, mortgage and jail-card rules (Sections 9, 13, 15); partial-payment debt system (Sections 16, 17); trade rules (Section 19); how cards work (Sections 20, 21); Properties manager, Trade and confirmed bankruptcy (Section 35).*
 *Game: Siam Streets | siamstreets.io*
 *Slogan: Can you rule the streets of Siam?*

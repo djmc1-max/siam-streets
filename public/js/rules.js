@@ -114,7 +114,44 @@
     return { ok: true, amount: sellRefund(sq, lvl), toLevel: lvl - 1 };
   }
 
+  // ---------- trading (Section 19) ----------
+  // An offer: `give` is what `from` hands over, `get` what `from` receives from `to`.
+  // Each side is { props: [squareIds], cash: number, cards: [jail card ids] }.
+  const emptySide = () => ({ props: [], cash: 0, cards: [] });
+  const sideIsEmpty = (s) => s.props.length === 0 && s.cash === 0 && s.cards.length === 0;
+
+  function checkTradeSide(state, ownerId, side) {
+    const owner = state.players[ownerId];
+    if (!side || !Array.isArray(side.props) || !Array.isArray(side.cards) || !Number.isInteger(side.cash) || side.cash < 0) {
+      return { ok: false, reason: 'That offer is not valid' };
+    }
+    if (side.cash > owner.cash) return { ok: false, reason: owner.name + ' does not have ' + fmt(side.cash) };
+    if (new Set(side.props).size !== side.props.length) return { ok: false, reason: 'A property is listed twice' };
+    for (const id of side.props) {
+      const sq = sqOf(id);
+      if (!sq || !isBuyable(sq) || state.owners[id] !== ownerId) return { ok: false, reason: owner.name + ' does not own ' + (sq ? sq.name : 'that property') };
+      if (sq.group && groupHasBuildings(state, sq.group)) return { ok: false, reason: 'Sell the houses on the ' + data.COLOR_GROUPS[sq.group].name + ' group before trading ' + sq.name };
+    }
+    if (new Set(side.cards).size !== side.cards.length || side.cards.some((c) => owner.jailCards.indexOf(c) === -1)) {
+      return { ok: false, reason: owner.name + ' does not have that Get Out of Jail Free card' };
+    }
+    return { ok: true };
+  }
+
+  function checkTrade(state, from, to, give, get) {
+    if (from === to) return { ok: false, reason: 'Pick another player' };
+    const a = state.players[from], b = state.players[to];
+    if (!a || !b || a.bankrupt || b.bankrupt) return { ok: false, reason: 'That player is out of the game' };
+    const g = checkTradeSide(state, from, give);
+    if (!g.ok) return g;
+    const r = checkTradeSide(state, to, get);
+    if (!r.ok) return r;
+    if (sideIsEmpty(give) && sideIsEmpty(get)) return { ok: false, reason: 'Add something to the offer' };
+    return { ok: true };
+  }
+
   return {
+    emptySide, sideIsEmpty, checkTrade,
     GROUP_SQUARES, MAX_LEVEL, HOTEL, AIRPORT_RENT,
     sqOf, isBuyable, levelOf, isMortgaged, ownedIds, ownsFullGroup, groupLevels, groupHasBuildings, groupHasMortgage,
     rentFor, mortgageValue, buildCost, sellRefund, checkMortgage, checkUnmortgage, checkBuild, checkSell

@@ -146,6 +146,7 @@
 
             <div id="manage-bar" class="manage-bar" hidden>
               <button id="btn-props" class="btn btn-ghost" type="button">🏠 Properties</button>
+              <button id="btn-trade" class="btn btn-ghost" type="button" disabled>🤝 Trade</button>
             </div>
 
             <div id="actions" class="actions" hidden>
@@ -190,6 +191,17 @@
         </header>
         <div id="manager-body" class="manager-body"></div>
         <footer id="manager-foot" class="manager-foot"></footer>
+      </div>
+    </div>
+
+    <div id="trade" class="manager trade" role="dialog" aria-modal="true" aria-labelledby="trade-title" hidden>
+      <div class="manager-panel">
+        <header class="manager-head">
+          <h2 id="trade-title">Trade</h2>
+          <button id="trade-close" class="icon-btn" type="button" aria-label="Close">✕</button>
+        </header>
+        <div id="trade-body" class="manager-body"></div>
+        <footer id="trade-foot" class="trade-foot"></footer>
       </div>
     </div>
 
@@ -240,6 +252,7 @@
   <script src="js/cardview.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/manager.js"></script>
+  <script src="js/trade.js"></script>
   <script src="js/game.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/main.js"></script>
