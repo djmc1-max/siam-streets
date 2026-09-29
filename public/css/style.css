@@ -721,6 +721,7 @@ body { overflow-x: hidden; }
    Layout: [header] [colour strip] [players] ... [board, centred in the space left] ... [bottom dock]
    ===================================================================== */
 .dock { display: none; }
+.feed-slot { display: none; }
 
 @media (max-width: 600px) {
   #game {
@@ -791,6 +792,39 @@ body { overflow-x: hidden; }
 
   /* tap-a-square card floats above the dock */
   .square-detail { bottom: calc(var(--dock-h, 0px) + 12px); z-index: 45; }
+}
+
+/* =====================================================================
+   Tall phones (<= 600px wide AND >= 720px tall): the empty space above the board becomes a big activity
+   feed. Top to bottom: players, feed (takes ALL the leftover height), board, dock. Shorter phones keep the
+   layout above, with the feed inside the board centre. (Keep this query in sync with ui.js initDock.)
+   ===================================================================== */
+@media (max-width: 600px) and (min-height: 720px) {
+  .board-wrap { margin-block: 0; }
+
+  .feed-slot {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 96px;
+    width: 100%;
+    padding: 2px 4px 8px;
+  }
+  .feed-slot .feed {
+    flex: 1;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.35;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .feed-slot .feed li { padding: 3px 0; }
+
+  /* with the feed gone from the board centre, give the logo and dice the room */
+  .board-center { justify-content: center; gap: calc(var(--u) * 3); }
+  .board-center .logo--compact { font-size: calc(var(--u) * 7); }
+  .board-center .die3d { --s: calc(var(--u) * 14); }
+  .board-center .dice { gap: calc(var(--u) * 9); }
 }
 
 /* the treasure chest is the "exciting" square: give it a bit more presence than the other icons */

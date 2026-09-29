@@ -48,7 +48,7 @@ Build this as a web application using:
 - Rounded corners on property squares
 - Corner squares are larger than regular squares
 - Square icons: **Treasure** squares use a custom gold treasure-chest icon (lid slightly open, warm glow, coins spilling out); the **In Prison** and **Go To Prison** corners use a jail-bars icon (a dark cell with vertical steel bars). The same icons appear wherever those squares are referenced in the UI (activity feed, player cards).
-- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. The board is centered vertically in the space between the top bar (header, colour strip, players) and the dock, with equal spacing above and below. Tablet and desktop keep the controls in the center of the board.
+- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. On **tall phones** (720px or taller) the space above the board becomes a large activity feed (the feed moves out of the board center; the logo and dice grow to fill it), so players can see many more recent events; the board sits directly above the dock. On **shorter phones** the feed stays in the board center and the board is centered vertically between the top bar (header, colour strip, players) and the dock with equal spacing above and below. Tablet and desktop keep the feed and the controls in the center of the board.
 
 ---
 
@@ -195,7 +195,7 @@ Build this as a web application using:
 
 | Square | Rule |
 |---|---|
-| Income Tax (square 5) | Player pays 10% of current cash OR flat ฿2,000 — whichever is less. The square itself shows only "10%"; the exact amount is worked out automatically when a player lands on it and appears in the activity feed |
+| Income Tax (square 5) | Player pays 10% of current cash OR flat ฿2,000 — whichever is less. The square itself shows only "10%"; tapping it shows the full rule ("10% of your cash (max ฿2,000)"). The exact amount is worked out automatically when a player lands on it and appears in the activity feed |
 | Luxury Tax (square 39) | Player pays flat ฿1,000 |
 
 All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corner square** — when a player lands on it they collect everything in the pot.
@@ -681,6 +681,6 @@ This is the very first screen a player sees when they open Siam Streets.
 ---
 
 *Document version: 3 — Ready for Claude Code*
-*Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%"; treasure-chest and jail-bars icons; phone layout with a bottom dock (Section 3).*
+*Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%" (tap card shows the full rule); treasure-chest and jail-bars icons; phone layout with a bottom dock and, on tall phones, a large activity feed above the board (Section 3).*
 *Game: Siam Streets | siamstreets.io*
 *Slogan: Can you rule the streets of Siam?*

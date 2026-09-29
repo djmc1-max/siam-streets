@@ -53,7 +53,7 @@
     P(2, 'Khao San Rd', 'red', 600),
     TREASURE(3),
     P(4, 'Chatuchak', 'red', 600),
-    { id: 5, name: 'Income Tax', type: 'tax', icon: '🧾' },
+    { id: 5, name: 'Income Tax', type: 'tax', icon: '🧾', detail: '10% of your cash (max ฿2,000)' }, // square shows "10%"; tap card shows the rule
     AIRPORT(6, 'Don Mueang'),
     P(7, 'Nana Plaza', 'orange', 1000),
     SURPRISE(8),

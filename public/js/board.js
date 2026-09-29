@@ -73,7 +73,7 @@
     const parts = [];
     if (sq.group) parts.push(COLOR_GROUPS[sq.group].name);
     else parts.push({ corner: 'Corner', card: 'Card', tax: 'Tax', airport: 'Airport', utility: 'Utility' }[sq.type]);
-    const price = priceLabel(sq);
+    const price = sq.detail || priceLabel(sq);
     if (price) parts.push(price);
     else if (sq.sub) parts.push(sq.sub);
     return parts.join(' · ');
