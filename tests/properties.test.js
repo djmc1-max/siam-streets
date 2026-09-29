@@ -246,6 +246,8 @@ test('bankruptcy returns properties to the bank with their buildings and mortgag
   g.state.owners[40] = 1; g.state.players[0].cash = 10;
   placeBefore(g, 0, 40, 7); rig(g, [3, 4]);
   g.roll();
+  assert.equal(g.state.phase, 'debt');            // no more automatic bankruptcy: the debt comes first (Section 17)
+  g.declareBankruptcy(0);
   assert.ok(g.state.players[0].bankrupt);
   assert.deepEqual([g.state.levels[2], g.state.levels[4], g.state.mortgaged[6], g.state.owners[2], g.state.owners[6]], [undefined, undefined, undefined, undefined, undefined]);
 });

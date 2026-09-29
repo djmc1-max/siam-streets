@@ -39,9 +39,16 @@ function checkInvariants(g, label) {
   const held = [].concat(...st.players.map((p) => p.jailCards));
   assert.deepEqual(st.decks.surprise.slice().sort(), CARDS.surprise.map((c) => c.id).sort(), label + ': Surprise deck changed');
   assert.deepEqual(st.decks.treasure.concat(held).sort(), CARDS.treasure.map((c) => c.id).sort(), label + ': Treasure cards lost or duplicated');
+  st.debts.forEach((d) => {
+    assert.ok(d.amount > 0, label + ': empty debt left in the log');
+    assert.ok(!st.players[d.debtor].bankrupt, label + ': debt of a bankrupt player');
+    assert.ok(typeof d.creditor !== 'number' || !st.players[d.creditor].bankrupt, label + ': debt owed to a bankrupt player');
+  });
+  if (st.phase === 'debt') assert.ok(g.debtsOf(st.current).length > 0, label + ': debt phase without a debt');
+  else if (st.phase !== 'over') assert.equal(g.debtsOf(st.current).length, 0, label + ': current player owes money outside the debt phase');
   assert.ok(st.songkranPot >= 0);
   assert.ok(!st.players[st.current].bankrupt || st.phase === 'over', label + ': current player is bankrupt');
-  assert.ok(['roll', 'action', 'auction', 'end', 'over'].includes(st.phase));
+  assert.ok(['roll', 'action', 'auction', 'end', 'debt', 'over'].includes(st.phase));
 }
 
 // One random property-management action, if any is legal for the current player.
@@ -60,7 +67,7 @@ function tryManage(g, rnd) {
 }
 
 test('fuzz: 300 random games never throw and always keep the invariants', () => {
-  let finished = 0, built = 0, mortgaged = 0, cards = 0;
+  let finished = 0, built = 0, mortgaged = 0, cards = 0, debtsSeen = 0, debtPhases = 0;
   for (let seed = 1; seed <= 300; seed++) {
     const rnd = mulberry32(seed);
     const n = 2 + Math.floor(rnd() * 5);
@@ -74,6 +81,15 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
         const max = Math.min(p.cash, 3000);
         if (rnd() < 0.5 && max > auc.highBid) g.bid(p.id, auc.highBid + 1 + Math.floor(rnd() * (max - auc.highBid)));
         else g.pass(p.id);
+      } else if (g.state.phase === 'debt') {
+        // raise money (sell a building, else mortgage), or give up when there is nothing left / at random
+        const pid = g.state.current;
+        const owned = Rules.ownedIds(g.state, pid);
+        const sellable = owned.find((id) => Rules.checkSell(g.state, pid, id).ok);
+        const mortgageable = owned.find((id) => Rules.checkMortgage(g.state, pid, id).ok);
+        if (rnd() < 0.08 || (sellable === undefined && mortgageable === undefined)) { g.declareBankruptcy(pid); debtsSeen++; }
+        else if (sellable !== undefined) g.sellBuilding(pid, sellable);
+        else g.mortgage(pid, mortgageable);
       } else if (a.canManage && rnd() < 0.3 && tryManage(g, rnd)) {
         if (Object.keys(g.state.levels).length) built++;
         if (Object.keys(g.state.mortgaged).length) mortgaged++;
@@ -84,6 +100,7 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
       else if (a.canRoll) { const ev = g.roll(); if (ev.some((e) => e.type === 'cardDrawn')) cards++; }
       else if (a.canEndTurn) g.endTurn();
       else assert.fail(label + ': no legal action in phase ' + g.state.phase);
+      if (g.state.phase === 'debt') debtPhases++;
       checkInvariants(g, label);
     }
     if (g.state.phase === 'over') {
@@ -93,5 +110,5 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
     }
   }
   assert.ok(finished > 0, 'at least some random games should reach a winner');
-  assert.ok(cards > 100 && built > 50 && mortgaged > 50, 'the fuzz must actually exercise cards, buildings and mortgages (' + [cards, built, mortgaged] + ')');
+  assert.ok(cards > 100 && built > 50 && mortgaged > 50 && debtPhases > 50, 'the fuzz must actually exercise cards, buildings, mortgages and debts (' + [cards, built, mortgaged, debtPhases] + ')');
 });

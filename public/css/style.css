@@ -942,3 +942,44 @@ body { overflow-x: hidden; }
   .dock .manage-bar { gap: 10px; }
   .dock .manage-bar .btn { min-height: 46px; font-size: 15px; border-radius: 12px; padding: 6px 10px; }
 }
+
+/* =====================================================================
+   Phase 3: debt + confirm dialog
+   ===================================================================== */
+.btn-danger { background: #b4232c; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #d12b36; }
+.actions .btn-danger { grid-column: 1 / -1; }
+
+.debt-banner {
+  width: 100%;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+  font-size: clamp(11px, calc(var(--u) * 1.7), 14px);
+  font-weight: 700;
+  line-height: 1.35;
+  color: #ffe4e6;
+  background: linear-gradient(135deg, #7f1d1d, #4c0f16);
+  border: 2px solid #ef4444;
+  border-radius: calc(var(--u) * 1.2);
+  animation: debt-pulse 1.8s ease-in-out infinite;
+}
+@keyframes debt-pulse { 50% { box-shadow: 0 0 14px rgba(239, 68, 68, .6); } }
+@media (prefers-reduced-motion: reduce) { .debt-banner { animation: none; } }
+
+.pc-debt { flex-basis: 100%; font-size: 11px; font-weight: 800; color: #fca5a5; }
+.player-card { flex-wrap: wrap; }
+.player-card.in-debt { border-color: #ef4444; }
+
+.mgr-bankrupt { align-self: flex-start; min-height: 40px; padding: 6px 12px; font-size: 13px; border-radius: 10px; }
+
+.confirm { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(5, 8, 18, .8); }
+.confirm-box { width: min(100%, 380px); padding: 22px 20px; background: var(--bg-elev); border: 2px solid #ef4444; border-radius: 18px; box-shadow: 0 0 40px rgba(239, 68, 68, .3); }
+.confirm-box h2 { margin: 0 0 8px; font-size: 20px; }
+.confirm-box p { margin: 0 0 18px; color: var(--text-dim); line-height: 1.45; }
+.confirm-btns { display: flex; gap: 10px; }
+.confirm-btns .btn { flex: 1; min-height: 50px; font-size: 16px; border-radius: 12px; }
+
+@media (max-width: 600px) {
+  .dock .debt-banner { padding: 8px 12px; font-size: 14px; border-radius: 14px; }
+  .dock .debt-hint { display: none; }
+  .dock .actions .btn-danger { min-height: 52px; font-size: 17px; }
+}

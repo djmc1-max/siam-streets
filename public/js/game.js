@@ -73,6 +73,7 @@
       case 'jailCard': return e.useJailCard();
       case 'buy': return e.buy();
       case 'auction': return e.declineToAuction();
+      case 'bankrupt': return e.declareBankruptcy(actor.id);
       case 'mortgage': return e.mortgage(actor.id, action.square);
       case 'unmortgage': return e.unmortgage(actor.id, action.square);
       case 'build': return e.build(actor.id, action.square);
@@ -97,6 +98,8 @@
       });
     }
     const ctx = { jailed: actor.jailed, offer: st.pending ? BOARD[st.pending - 1] : null };
+    if (st.phase === 'debt') ctx.debtText = debtBannerText(actor);
+    else UI.setDebtBanner(null);
     return UI.awaitAction(e.availableActions(), ctx);
   }
 
@@ -118,6 +121,8 @@
       }
     }
 
+    if (e.state.phase === 'debt') return bot.decideDebt(e, actor.id);
+
     switch (e.state.phase) {
       case 'roll':
         if (av.canUseJailCard && bot.decideJail(e, actor.id) === 'card') return { type: 'jailCard' };
@@ -133,12 +138,24 @@
     }
   }
 
+  const who = (creditor) => (typeof creditor === 'number' ? nameOf(creditor) : creditor === 'pot' ? 'the Songkran pot' : 'the bank');
+
+  function debtBannerText(actor) {
+    const e = SiamGame.engine;
+    const list = e.debtsOf(actor.id).map((d) => fmtBaht(d.amount) + ' to ' + who(d.creditor));
+    return {
+      main: '⚠️ You owe ' + list.join(' and ') + '.',
+      hint: 'Sell houses, mortgage a property or trade to raise the money — or declare bankruptcy.'
+    };
+  }
+
   // ---------- replaying engine events ----------
   async function playEvents(events, myRun) {
     for (const ev of events) {
       if (SiamGame.runId !== myRun) return;
       await handle(ev);
       if (ev.balances) UI.setBalances(ev.balances);
+      if (ev.debts) UI.setDebts(ev.debts);
     }
   }
 
@@ -231,6 +248,15 @@
       case 'sold':
         UI.setLevel(ev.square, ev.level);
         Feed.add('💵', n + ' sold a ' + (ev.hotel ? 'hotel' : 'house') + ' on ' + sqName(ev.square) + ' for ' + fmtBaht(ev.refund));
+        break;
+      case 'debtLogged':
+        Feed.add('⚠️', n + ' owes ' + fmtBaht(ev.amount) + ' to ' + who(ev.creditor) + ' — debt pending');
+        break;
+      case 'debtPayment':
+        Feed.add('💵', n + ' paid ' + fmtBaht(ev.amount) + ' toward their debt to ' + who(ev.creditor) + ' (' + fmtBaht(ev.remaining) + ' left)');
+        break;
+      case 'debtResolved':
+        Feed.add('✅', n + ' resolved their debt');
         break;
       case 'rentMortgaged':
         Feed.add('🏦', n + ' landed on ' + sqName(ev.square) + ' — mortgaged, so no rent');

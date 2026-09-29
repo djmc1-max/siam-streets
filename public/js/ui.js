@@ -12,7 +12,7 @@
   const changeHooks = [];   // called whenever the human can / cannot act (the manager redraws itself)
   const fire = () => changeHooks.forEach((fn) => fn());
 
-  const BUTTONS = { roll: 'btn-roll', fine: 'btn-fine', card: 'btn-card', buy: 'btn-buy', auction: 'btn-auction', end: 'btn-end' };
+  const BUTTONS = { roll: 'btn-roll', fine: 'btn-fine', card: 'btn-card', buy: 'btn-buy', auction: 'btn-auction', end: 'btn-end', bankrupt: 'btn-bankrupt' };
 
   // ---------- player panel ----------
   function renderPlayers(list, startingCash) {
@@ -27,7 +27,8 @@
       card.dataset.player = p.id;
       card.style.setProperty('--ring', window.SiamTokens.COLORS[p.id % window.SiamTokens.COLORS.length]);
       card.innerHTML = '<span class="pc-token"></span><span class="pc-info"><span class="pc-name"></span><span class="pc-cash"></span></span>' +
-        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-free" hidden title="Get Out of Jail Free cards"></span><span class="pc-jail" hidden></span></span>';
+        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-free" hidden title="Get Out of Jail Free cards"></span><span class="pc-jail" hidden></span></span>' +
+        '<span class="pc-debt" hidden></span>';
       card.querySelector('.pc-token').textContent = p.icon;
       card.querySelector('.pc-jail').replaceChildren(window.SiamIcons.el('jail'));
       card.querySelector('.pc-name').textContent = p.name + (p.isBot ? ' 🤖' : '');
@@ -58,6 +59,54 @@
       el.classList.remove('up', 'down');
       void el.offsetWidth;
       el.classList.add(cls);
+    });
+  }
+
+  // Section 17: debts are shown clearly on screen
+  function setDebts(totals) {
+    totals.forEach((owed, id) => {
+      const el = card(id).querySelector('.pc-debt');
+      el.hidden = !(owed > 0);
+      el.textContent = owed > 0 ? '⚠️ owes ' + fmtBaht(owed) : '';
+      card(id).classList.toggle('in-debt', owed > 0);
+    });
+  }
+  // main = what you owe; hint = what to do about it (the hint is dropped on phones to save room)
+  function setDebtBanner(main, hint) {
+    const b = $('debt-banner');
+    b.hidden = !main;
+    b.replaceChildren();
+    if (!main) return;
+    const m = document.createElement('span');
+    m.className = 'debt-main';
+    m.textContent = main;
+    b.appendChild(m);
+    if (hint) {
+      const h = document.createElement('span');
+      h.className = 'debt-hint';
+      h.textContent = ' ' + hint;
+      b.appendChild(h);
+    }
+  }
+
+  // Yes/No dialog for irreversible things (declaring bankruptcy). Resolves true / false.
+  function confirm(title, text, okLabel) {
+    $('confirm-title').textContent = title;
+    $('confirm-text').textContent = text;
+    $('confirm-ok').textContent = okLabel;
+    $('confirm').hidden = false;
+    $('confirm-cancel').focus({ preventScroll: true });
+    return new Promise((resolve) => {
+      const done = (value) => {
+        $('confirm').hidden = true;
+        $('confirm-ok').onclick = $('confirm-cancel').onclick = null;
+        document.removeEventListener('keydown', onKey);
+        resolve(value);
+      };
+      const onKey = (e) => { if (e.key === 'Escape') done(false); };
+      document.addEventListener('keydown', onKey);
+      $('confirm-ok').onclick = () => done(true);
+      $('confirm-cancel').onclick = () => done(false);
     });
   }
 
@@ -153,7 +202,10 @@
   // Enables exactly what the engine allows the human to do, and resolves with their choice.
   function awaitAction(avail, ctx) {
     $('btn-roll').textContent = ctx.jailed ? 'Roll for doubles' : 'Roll Dice';
-    if (avail.canAuction) {
+    if (avail.inDebt) setDebtBanner(ctx.debtText.main, ctx.debtText.hint); else setDebtBanner(null);
+    if (avail.inDebt) {
+      setButtons({ bankrupt: 'on' });
+    } else if (avail.canAuction) {
       $('btn-buy').textContent = 'Buy ' + fmtBaht(ctx.offer.price);
       setButtons({ buy: avail.canBuy ? 'on' : 'off', auction: 'on' });
     } else {
@@ -171,8 +223,13 @@
 
   function bindButtons() {
     Object.keys(BUTTONS).forEach((type) => {
-      $(BUTTONS[type]).addEventListener('click', () => {
+      $(BUTTONS[type]).addEventListener('click', async () => {
         if (!resolveAction || $(BUTTONS[type]).disabled) return;
+        if (type === 'bankrupt') {           // irreversible: always ask first
+          const yes = await confirm('Declare bankruptcy?',
+            'You lose every property and are out of the game. Your cash goes to whoever you owe (or the bank). This cannot be undone.', 'Yes, declare bankruptcy');
+          if (!yes || !resolveAction) return;
+        }
         const done = resolveAction;
         resolveAction = null;
         lock();
@@ -255,6 +312,7 @@
 
   function showSetup() {
     $('manage-bar').hidden = true;
+    $('debt-banner').hidden = true;
     $('setup').hidden = false;
     $('actions').hidden = true;
     $('auction').hidden = true;
@@ -285,7 +343,7 @@
       const target = phone.matches ? dock : center;
       (tallPhone.matches ? $('feed-slot') : center).appendChild($('feed'));
       // order: setup, manage bar, actions, auction (in the dock the manage bar sits above the big buttons)
-      ['setup', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
+      ['setup', 'debt-banner', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
       $('feed').scrollTop = $('feed').scrollHeight;
       measure();
     };
@@ -309,7 +367,7 @@
   }
 
   window.SiamUI = {
-    init, renderPlayers, setBalances, setJailCards, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
+    init, renderPlayers, setBalances, setJailCards, setDebts, setDebtBanner, confirm, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
     idle, lock, awaitAction, submit, canAct, onChange: (fn) => changeHooks.push(fn), setLevel, setMortgaged, showAuction, updateAuction, hideAuction, awaitBid,
     showSetup, showPlay, showWinner
   };

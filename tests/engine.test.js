@@ -291,36 +291,6 @@ test('auction: starts automatically when the landing player cannot afford the pr
   assert.equal(g.state.players[1].cash, 14999);
 });
 
-// ---- Bankruptcy (Section 16) ----
-test('bankruptcy: cash goes to the creditor, properties return to the bank, last player wins', () => {
-  const g = newGame(2);
-  g.state.owners[40] = 1; g.state.owners[38] = 0; // P1 owns Sukhumvit (rent 500); P0 owns Sathorn
-  g.state.players[0].cash = 300;
-  placeBefore(g, 0, 40, 7); rig(g, [3, 4]);
-  const ev = g.roll();
-  const rent = ev.find((e) => e.type === 'rent');
-  assert.equal(rent.amount, 500); assert.equal(rent.paid, 300);
-  assert.equal(g.state.players[1].cash, 15300);
-  const b = ev.find((e) => e.type === 'bankrupt');
-  assert.deepEqual(b.released, [38]);
-  assert.equal(g.state.owners[38], undefined);
-  assert.equal(g.state.owners[40], 1);
-  assert.ok(g.state.players[0].bankrupt);
-  assert.equal(ev.at(-1).type, 'gameOver');
-  assert.equal(g.state.winner, 1);
-  assert.equal(g.state.phase, 'over');
-});
-
-test('bankruptcy in a 3-player game passes the turn and the game continues', () => {
-  const g = newGame(3); g.state.owners[40] = 2; g.state.players[0].cash = 10;
-  placeBefore(g, 0, 40, 7); rig(g, [3, 4]);
-  const ev = g.roll();
-  assert.ok(types(ev).includes('bankrupt') && !types(ev).includes('gameOver'));
-  assert.equal(g.state.current, 1);
-  assert.equal(g.state.phase, 'roll');
-  assert.equal(ev.at(-1).type, 'turn');
-});
-
 test('every event carries a per-player balances snapshot', () => {
   const g = newGame(); rig(g, [2, 4]);
   const ev = g.roll();

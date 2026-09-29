@@ -54,6 +54,9 @@
       decks: { surprise: [], treasure: [] },   // card ids, top of the deck first
       pending: null,       // squareId of an unowned property awaiting buy/auction
       auction: null,
+      debts: [],           // { id, debtor, creditor: playerId | 'bank' | 'pot', amount (still owed), reason }
+      debtSeq: 0,
+      afterDebt: null,     // what to do once the current player's debts are cleared: 'start' (roll) or 'landing'
       winner: null
     };
 
@@ -74,7 +77,9 @@
     // ---------- helpers ----------
     const current = () => state.players[state.current];
     const balances = () => state.players.map((p) => p.cash);
-    const emit = (list, type, extra) => { list.push(Object.assign({ type }, extra, { balances: balances() })); };
+    const emit = (list, type, extra) => {
+      list.push(Object.assign({ type }, extra, { balances: balances(), debts: state.players.map((q) => debtTotal(q.id)) }));
+    };
     const rollDie = () => {
       const r = game.rng();
       if (!(r >= 0 && r < 1)) throw new Error('rng must return a number in [0, 1), got ' + r);
@@ -84,14 +89,64 @@
 
     const rentFor = (sq, ownerId, diceTotal) => Rules.rentFor(state, sq, ownerId, diceTotal);
 
-    // Moves money. creditor is a player id, 'bank' or 'pot'. If the payer is short, all their
-    // cash is handed over (a tax shortfall goes to the bank) and the caller declares bankruptcy.
+    function give(creditor, amount) {
+      if (typeof creditor === 'number') state.players[creditor].cash += amount;
+      else if (creditor === 'pot') state.songkranPot += amount;   // 'bank': the money just leaves the game
+    }
+
+    // Moves money. creditor is a player id, 'bank' or 'pot'. If the payer is short, ALL their available
+    // cash goes to the creditor right now (Sections 16/17) and `owed` is what is left; the caller emits its
+    // own payment event and then calls owe() to log the remainder as a debt.
     function charge(payer, amount, creditor) {
       const paid = Math.min(amount, payer.cash);
       payer.cash -= paid;
-      if (typeof creditor === 'number') state.players[creditor].cash += paid;
-      else if (creditor === 'pot' && paid === amount) state.songkranPot += paid;
-      return { paid, short: paid < amount };
+      give(creditor, paid);
+      return { paid, owed: amount - paid };
+    }
+
+    const debtsOf = (pid) => state.debts.filter((d) => d.debtor === pid);
+    const debtTotal = (pid) => debtsOf(pid).reduce((sum, d) => sum + d.amount, 0);
+
+    // Section 17: the remainder is logged and must be resolved before the player's next roll / turn end.
+    function owe(debtor, creditor, amount, reason, list) {
+      const d = { id: ++state.debtSeq, debtor: debtor.id, creditor, amount, reason };
+      state.debts.push(d);
+      emit(list, 'debtLogged', { debtId: d.id, playerId: debtor.id, creditor, amount, owed: debtTotal(debtor.id), reason });
+    }
+
+    // Any cash a debtor holds (from a mortgage, a sale, a trade, rent...) goes straight to the oldest debt.
+    function settleDebts(list) {
+      state.debts.slice().forEach((d) => {
+        const debtor = state.players[d.debtor];
+        if (debtor.bankrupt || debtor.cash <= 0) return;
+        const pay = Math.min(debtor.cash, d.amount);
+        debtor.cash -= pay;
+        give(d.creditor, pay);
+        d.amount -= pay;
+        if (d.amount === 0) {
+          state.debts = state.debts.filter((x) => x !== d);
+          emit(list, 'debtResolved', { debtId: d.id, playerId: d.debtor, creditor: d.creditor, owed: debtTotal(d.debtor) });
+        } else {
+          emit(list, 'debtPayment', { debtId: d.id, playerId: d.debtor, creditor: d.creditor, amount: pay, remaining: d.amount, owed: debtTotal(d.debtor) });
+        }
+      });
+    }
+
+    // After the current player's last debt is cleared the interrupted turn carries on.
+    function afterSettle(list) {
+      if (state.phase !== 'debt') return;
+      const p = current();
+      if (debtsOf(p.id).length > 0) return;
+      const next = state.afterDebt;
+      state.afterDebt = null;
+      if (next === 'start') state.phase = 'roll';
+      else finishStep(p, list);
+    }
+
+    // The end of a landing / card: a prisoner's turn ends, otherwise a double rolls again or the turn can end.
+    function finishStep(p, list) {
+      if (p.jailed) { state.extraRoll = false; state.phase = 'end'; return; }
+      finishAction(list);
     }
 
     function checkWinner(list) {
@@ -113,6 +168,7 @@
       p.jailCards = [];
       p.bankrupt = true;
       p.jailed = false;
+      state.debts = state.debts.filter((d) => d.debtor !== p.id && d.creditor !== p.id);   // debts owed BY or TO them end here
       emit(list, 'bankrupt', { playerId: p.id, creditor, released });
       checkWinner(list);
     }
@@ -134,7 +190,9 @@
       }
       state.current = next;
       state.turn += 1;
-      state.phase = 'roll';
+      // a player who still owes money (e.g. from Surprise card 4) must clear it before rolling
+      state.phase = debtsOf(next).length ? 'debt' : 'roll';
+      state.afterDebt = state.phase === 'debt' ? 'start' : null;
       emit(list, 'turn', { playerId: next, turn: state.turn });
     }
 
@@ -239,16 +297,18 @@
       } else if (fx.type === 'pay') {
         const r = charge(p, fx.amount, 'bank');
         emit(list, 'cardEffect', { playerId: p.id, kind: 'pay', amount: fx.amount, paid: r.paid });
-        if (r.short) declareBankrupt(p, 'bank', list);
+        if (r.owed) owe(p, 'bank', r.owed, 'card', list);
       } else if (fx.type === 'collectEach') {
         const from = [];
+        const short = [];
         state.players.forEach((q) => {
           if (q.id === p.id || q.bankrupt) return;
           const r = charge(q, fx.amount, p.id);
           from.push(q.id);
-          if (r.short) declareBankrupt(q, p.id, list);
+          if (r.owed) short.push([q, r.owed]);
         });
         emit(list, 'cardEffect', { playerId: p.id, kind: 'collectEach', amount: fx.amount, from });
+        short.forEach(([q, owed]) => owe(q, p.id, owed, 'card', list));   // they settle it on their own turn
       } else if (fx.type === 'jail') {
         goToJail(p, list, 'card');
       } else if (fx.type === 'skip') {
@@ -275,7 +335,7 @@
         const amount = sq.id === 5 ? Math.min(Math.floor(p.cash * 0.10), TAX_10_CAP) : LUXURY_TAX;
         const r = charge(p, amount, 'pot');
         emit(list, 'tax', { playerId: p.id, square: sq.id, amount, paid: r.paid });
-        if (r.short) declareBankrupt(p, 'bank', list);
+        if (r.owed) owe(p, 'pot', r.owed, 'tax', list);
       } else if (sq.type === 'card') {
         drawCard(p, sq.name === 'Surprise' ? 'surprise' : 'treasure', list);
       } else {
@@ -295,15 +355,15 @@
           const amount = rentFor(sq, ownerId, total);
           const r = charge(p, amount, ownerId);
           emit(list, 'rent', { playerId: p.id, ownerId, square: sq.id, amount, paid: r.paid });
-          if (r.short) declareBankrupt(p, ownerId, list);
+          if (r.owed) owe(p, ownerId, r.owed, 'rent', list);
         }
       }
 
       if (state.pending !== null || state.auction) return; // waiting on a buy/auction decision
       if (state.phase === 'over') return;
       if (p.bankrupt) { advanceTurn(list); return; }
-      if (p.jailed) { state.extraRoll = false; state.phase = 'end'; return; }
-      finishAction(list);
+      if (debtsOf(p.id).length) { state.phase = 'debt'; state.afterDebt = 'landing'; return; }   // must clear it first
+      finishStep(p, list);
     }
 
     // ---------- public actions ----------
@@ -370,7 +430,7 @@
     // Property management (mortgage / build / sell): your own turn, any step of it except auctions.
     function assertCanManage(pid) {
       if (pid !== state.current) throw new Error('You can only manage properties on your own turn');
-      if (['roll', 'action', 'end'].indexOf(state.phase) === -1) throw new Error('Cannot manage properties now (' + state.phase + ')');
+      if (['roll', 'action', 'end', 'debt'].indexOf(state.phase) === -1) throw new Error('Cannot manage properties now (' + state.phase + ')');
     }
 
     game.mortgage = function (pid, sqId) {
@@ -415,6 +475,24 @@
       if (c.toLevel === 0) delete state.levels[sqId]; else state.levels[sqId] = c.toLevel;
       state.players[pid].cash += c.amount;
       emit(list, 'sold', { playerId: pid, square: sqId, level: c.toLevel, refund: c.amount, hotel: wasHotel });
+      return list;
+    };
+
+    // Section 35: Declare Bankruptcy. Also how a hopeless debtor ends it (Sections 16/17): remaining cash goes
+    // to the creditor, everything else goes back to the bank, and the turn passes on.
+    game.declareBankruptcy = function (pid) {
+      if (pid !== state.current) throw new Error('You can only declare bankruptcy on your own turn');
+      if (['roll', 'action', 'end', 'debt'].indexOf(state.phase) === -1) throw new Error('Cannot declare bankruptcy now (' + state.phase + ')');
+      const list = [];
+      const p = current();
+      const owed = debtsOf(p.id);
+      const creditor = owed.length ? owed[0].creditor : 'bank';
+      const cash = p.cash;
+      p.cash = 0;
+      give(creditor, cash);
+      state.pending = null;
+      declareBankrupt(p, creditor, list);
+      if (state.phase !== 'over') advanceTurn(list);
       return list;
     };
 
@@ -502,11 +580,28 @@
         canBuy: state.phase === 'action' && !!sq && p.cash >= sq.price,
         canAuction: state.phase === 'action' && !!sq,
         canEndTurn: state.phase === 'end',
-        canManage: ['roll', 'action', 'end'].indexOf(state.phase) !== -1,
+        canManage: ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
+        inDebt: state.phase === 'debt',
+        debtOwed: debtTotal(state.current),
+        canBankrupt: ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
         canBid: state.phase === 'auction'
       };
     };
 
+    // Every action that can change anyone's cash ends by sweeping cash into open debts and, if the current
+    // player's last debt just cleared, letting the interrupted turn continue.
+    ['roll', 'payJailFine', 'useJailCard', 'buy', 'declineToAuction', 'bid', 'pass', 'endTurn',
+     'mortgage', 'unmortgage', 'build', 'sellBuilding', 'declareBankruptcy'].forEach((name) => {
+      const action = game[name];
+      game[name] = function () {
+        const list = action.apply(this, arguments);
+        if (state.phase !== 'over') { settleDebts(list); afterSettle(list); }
+        return list;
+      };
+    });
+
+    game.debtsOf = debtsOf;
+    game.debtTotal = debtTotal;
     game.current = current;
     game.ownedBy = ownedBy;
     game.rentFor = rentFor;

@@ -138,6 +138,15 @@
     const foot = $('manager-foot');
     foot.replaceChildren();
     if (player.jailCards.length) foot.append(el('span', 'mgr-cards', '🆓 Get Out of Jail Free cards: ' + player.jailCards.length));
+    const bk = el('button', 'btn btn-danger mgr-bankrupt', 'Declare bankruptcy…');
+    bk.type = 'button';
+    bk.disabled = !window.SiamUI.canAct();
+    bk.addEventListener('click', async () => {
+      const yes = await window.SiamUI.confirm('Declare bankruptcy?',
+        'You lose every property and are out of the game. Your cash goes to whoever you owe (or the bank). This cannot be undone.', 'Yes, declare bankruptcy');
+      if (yes) { close(); window.SiamUI.submit({ type: 'bankrupt' }); }
+    });
+    foot.append(bk);
     const hint = window.SiamUI.canAct()
       ? 'Mortgage = 50% of the price now, pay the same back to unmortgage. Sell houses for 50% of the build cost.'
       : 'You can change properties on your own turn.';

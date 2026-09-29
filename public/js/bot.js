@@ -40,6 +40,23 @@
       return rng() < BUY_CHANCE ? 'buy' : 'auction';
     },
 
+    // In debt (Section 17): sell the most valuable building first, then mortgage the most valuable property,
+    // and give up only when nothing is left to raise cash with. Returns an action for the turn loop.
+    decideDebt(game, playerId) {
+      const state = game.state;
+      let best = null;
+      Rules.ownedIds(state, playerId).forEach((id) => {
+        const c = Rules.checkSell(state, playerId, id);
+        if (c.ok && (!best || c.amount > best.amount)) best = { type: 'sell', square: id, amount: c.amount };
+      });
+      if (best) return { type: best.type, square: best.square };
+      Rules.ownedIds(state, playerId).forEach((id) => {
+        const c = Rules.checkMortgage(state, playerId, id);
+        if (c.ok && (!best || c.amount > best.amount)) best = { type: 'mortgage', square: id, amount: c.amount };
+      });
+      return best ? { type: best.type, square: best.square } : { type: 'bankrupt' };
+    },
+
     // A square to build on, or null. Cheapest legal build first, and never below the reserve.
     decideBuild(game, playerId, rng) {
       const state = game.state;
