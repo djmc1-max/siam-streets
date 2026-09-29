@@ -10,10 +10,33 @@
 </head>
 <body>
 
+  <!-- Shared logo ornament: Thai-inspired lotus flanked by tapering lines -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="orn-line-l" x1="0" x2="1"><stop offset="0" stop-color="#f5b642" stop-opacity="0"/><stop offset="1" stop-color="#f5b642"/></linearGradient>
+      <linearGradient id="orn-line-r" x1="0" x2="1"><stop offset="0" stop-color="#f5b642"/><stop offset="1" stop-color="#f5b642" stop-opacity="0"/></linearGradient>
+      <linearGradient id="orn-petal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset="1" stop-color="#d9911f"/></linearGradient>
+      <symbol id="logo-orn" viewBox="0 0 220 28">
+        <path d="M6 15H88" stroke="url(#orn-line-l)" stroke-width="1.6" fill="none"/>
+        <path d="M132 15H214" stroke="url(#orn-line-r)" stroke-width="1.6" fill="none"/>
+        <path d="M94 15l3.5-3.5L101 15l-3.5 3.5zM119 15l3.5-3.5 3.5 3.5-3.5 3.5z" fill="#f5b642"/>
+        <g fill="url(#orn-petal)">
+          <path d="M110 2C102.500 9 102.500 19 110 26 117.500 19 117.500 9 110 2z"/>
+          <path d="M110 26C100 25 92.500 20 90 11 98.500 12 105 17 110 26z" opacity=".9"/>
+          <path d="M110 26C120 25 127.500 20 130 11 121.500 12 115 17 110 26z" opacity=".9"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
   <!-- LANDING / ONBOARDING (GAME_DESIGN.md section 39) -->
   <main id="landing" class="screen">
     <div class="landing-card">
-      <h1 class="logo">Siam <span>Streets</span></h1>
+      <h1 class="logo" aria-label="Siam Streets">
+        <span class="logo-word" aria-hidden="true">Siam</span>
+        <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
+        <span class="logo-word" aria-hidden="true">Streets</span>
+      </h1>
       <p class="slogan">Can you rule the streets of Siam?</p>
 
       <label class="field-label" for="name-input">Your name</label>
@@ -44,11 +67,12 @@
     <div class="board-wrap">
       <div id="board" class="board" aria-label="Siam Streets board">
         <div class="board-center">
-          <h2 class="center-logo">Siam <span>Streets</span></h2>
-          <div class="dice" aria-label="Dice">
-            <div class="die" aria-hidden="true">⚀</div>
-            <div class="die" aria-hidden="true">⚁</div>
-          </div>
+          <h2 class="logo logo--compact" aria-label="Siam Streets">
+            <span class="logo-word" aria-hidden="true">Siam</span>
+            <span class="logo-word" aria-hidden="true">Streets</span>
+            <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
+          </h2>
+          <div id="dice" class="dice" role="img" aria-label="Two dice"></div>
           <ul id="feed" class="feed" aria-live="polite">
             <li>🎲 Waiting for the game to start…</li>
           </ul>
@@ -66,6 +90,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/dice.js"></script>
   <script src="js/board.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/main.js"></script>

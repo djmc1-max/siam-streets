@@ -20,6 +20,14 @@
   --pink: #f472b6;
 }
 
+@font-face {
+  font-family: "Cinzel Decorative";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../fonts/cinzel-decorative-latin-900-normal.woff2") format("woff2");
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -84,17 +92,48 @@ body { overflow-x: hidden; }
 }
 
 .logo {
+  --logo-gold: linear-gradient(180deg, #fff6cf 0%, #f8cf62 38%, #e39a1f 72%, #b56f10 100%);
   margin: 0;
-  text-align: center;
-  font-size: clamp(40px, 12vw, 64px);
-  line-height: 1;
-  letter-spacing: -1px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Cinzel Decorative", Georgia, "Times New Roman", serif;
   font-weight: 900;
+  text-transform: uppercase;
+  line-height: .95;
+  letter-spacing: .06em;
+  /* soft glow + dark under-edge so the gold reads as a raised emblem */
+  filter: drop-shadow(0 0 14px rgba(245, 182, 66, .35)) drop-shadow(0 3px 0 rgba(60, 30, 0, .75));
 }
-.logo span, .center-logo span { color: var(--accent); }
+.logo .logo-word {
+  background: var(--logo-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  padding: 0 .06em; /* room for the last glyph's letter-spacing */
+}
+.logo .logo-orn { display: block; width: 3.6em; height: .46em; margin: .18em 0; overflow: visible; }
+
+/* landing size */
+#landing .logo { font-size: clamp(44px, 14vw, 76px); }
+#landing .logo .logo-word:last-of-type { font-size: .78em; letter-spacing: .1em; }
+#landing .logo .logo-orn { width: 4.2em; }
+
+/* compact one-line version in the board centre */
+.logo--compact {
+  margin-top: calc(var(--u) * 1.2);
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: .32em;
+  font-size: clamp(15px, calc(var(--u) * 4.4), 38px);
+  letter-spacing: .05em;
+}
+.logo--compact .logo-orn { flex-basis: 100%; width: 4.4em; margin: .1em auto 0; }
 
 .slogan {
-  margin: 4px 0 20px;
+  margin: 12px 0 20px;
   text-align: center;
   color: var(--text-dim);
   font-style: italic;
@@ -172,7 +211,8 @@ body { overflow-x: hidden; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 8px 12px;
+  width: 100%;
+  padding: 0 max(8px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)) 12px;
 }
 
 .game-header {
@@ -187,11 +227,12 @@ body { overflow-x: hidden; }
 .player-badge .badge-icon { font-size: 22px; }
 .header-logo { color: var(--text-dim); font-weight: 800; font-size: 14px; }
 
-.board-wrap { width: 100%; display: flex; justify-content: center; }
+.board-wrap { width: 100%; display: flex; justify-content: center; container-type: inline-size; }
 
 .board {
+  flex: none;
   --board: min(calc(100vw - 16px), calc(100vh - 150px));
-  --board: min(calc(100vw - 16px), calc(100dvh - 150px));
+  --board: min(100cqw, calc(100dvh - 150px));
   --u: calc(var(--board) / 100);
   width: var(--board);
   height: var(--board);
@@ -226,19 +267,29 @@ body { overflow-x: hidden; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 0;
   padding: 2px;
 }
 .square .name {
   font-weight: 700;
-  font-size: .86em;
-  overflow-wrap: anywhere;
+  font-size: 1em; /* fitNames() shrinks it only when a word would not fit */
+  /* Cap at the square's width; otherwise a long word grows the flex item and just gets clipped. */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: normal;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.square .price { color: var(--accent); font-weight: 700; }
+.square .name.clip {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.square .price { color: var(--accent); font-weight: 700; margin-top: .6em; }
 .square .icon { font-size: 1.9em; line-height: 1; }
 .square .sub { color: var(--text-dim); font-size: .85em; }
 
@@ -256,7 +307,7 @@ body { overflow-x: hidden; }
 .square.side-right .strip { flex: 0 0 20%; }
 
 .square.corner { font-size: clamp(6px, calc(var(--u) * 1.6), 15px); background: #1f2d55; }
-.square.corner .name { font-size: 1em; }
+.square.corner .name { font-size: 1.05em; }
 .square.corner .icon { font-size: 2.4em; }
 
 .square[data-group="red"]    { --strip: var(--red); }
@@ -282,25 +333,95 @@ body { overflow-x: hidden; }
   background: var(--bg);
   border-radius: calc(var(--u) * 1);
 }
-.center-logo {
-  margin: 0;
-  font-size: clamp(14px, calc(var(--u) * 5), 40px);
-  font-weight: 900;
-  letter-spacing: -.5px;
+.dice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 6);
+  padding: calc(var(--u) * 1.5) 0 calc(var(--u) * 2.5);
 }
-.dice { display: flex; gap: calc(var(--u) * 2); }
-.die {
+
+/* ---------- 3D dice ---------- */
+.die3d {
+  --s: calc(var(--u) * 9.5);
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  perspective: calc(var(--s) * 6);
+}
+.die3d:nth-child(1) { --rx: -26deg; --ry: -34deg; --rz: -4deg; }
+.die3d:nth-child(2) { --rx: -30deg; --ry:  38deg; --rz:  5deg; }
+
+.die-shadow {
+  position: absolute;
+  left: 4%;
+  right: -12%;
+  bottom: calc(var(--s) * -.2);
+  height: calc(var(--s) * .3);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .7) 0%, rgba(0, 0, 0, .35) 45%, transparent 72%);
+  filter: blur(calc(var(--u) * .5));
+}
+
+.cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
+}
+
+/* .orient turns the cube so the wanted value faces the viewer (used by Phase 2's roll). */
+.orient {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1);
+}
+.orient[data-value="1"] { transform: none; }
+.orient[data-value="2"] { transform: rotateY(-90deg); }
+.orient[data-value="3"] { transform: rotateX(-90deg); }
+.orient[data-value="4"] { transform: rotateX(90deg); }
+.orient[data-value="5"] { transform: rotateY(90deg); }
+.orient[data-value="6"] { transform: rotateY(180deg); }
+
+.face {
+  --half: calc(var(--s) / 2);
+  position: absolute;
+  inset: 0;
   display: grid;
-  place-items: center;
-  width: calc(var(--u) * 9);
-  height: calc(var(--u) * 9);
-  font-size: calc(var(--u) * 7);
-  line-height: 1;
-  color: #10192e;
-  background: #f4f6fb;
-  border-radius: calc(var(--u) * 1.4);
-  box-shadow: 0 calc(var(--u) * .6) calc(var(--u) * 1.4) rgba(0,0,0,.5);
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: calc(var(--s) * .15);
+  border-radius: calc(var(--s) * .2);
+  backface-visibility: hidden;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(145deg, #fbfcff 0%, #e6eaf4 55%, #c4cbdd 100%);
+  box-shadow:
+    inset 0 0 calc(var(--s) * .14) rgba(20, 30, 60, .28),
+    inset 0 calc(var(--s) * -.05) calc(var(--s) * .05) rgba(255, 255, 255, .6);
 }
+.face-1 { transform: translateZ(var(--half)); }
+.face-6 { transform: rotateY(180deg) translateZ(var(--half)); filter: brightness(.82); }
+.face-2 { transform: rotateY(90deg) translateZ(var(--half)); filter: brightness(.86); }
+.face-5 { transform: rotateY(-90deg) translateZ(var(--half)); filter: brightness(.86); }
+.face-3 { transform: rotateX(90deg) translateZ(var(--half)); filter: brightness(1.04); }
+.face-4 { transform: rotateX(-90deg) translateZ(var(--half)); filter: brightness(.78); }
+
+/* Recessed pips; the single pip on the 1 face is red, as on Thai dice. */
+.pip {
+  place-self: center;
+  width: calc(var(--s) * .2);
+  height: calc(var(--s) * .2);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #56617f 0%, #10192e 62%);
+  box-shadow: inset 0 calc(var(--s) * .02) calc(var(--s) * .03) rgba(0, 0, 0, .8), 0 1px 0 rgba(255, 255, 255, .7);
+}
+.face-1 .pip {
+  width: calc(var(--s) * .27);
+  height: calc(var(--s) * .27);
+  background: radial-gradient(circle at 35% 30%, #ff8a8d 0%, #c4262c 65%, #7d1216 100%);
+}
+
 .feed {
   flex: 1;
   width: 100%;
@@ -363,15 +484,11 @@ body { overflow-x: hidden; }
   .square .icon { font-size: 1.5em; }
   .square .sub { display: none; }
   .square .name { -webkit-line-clamp: 2; }
-  .board { --board: min(calc(100vw - 8px), calc(100dvh - 170px)); }
-  #game { padding: 0 4px 12px; }
+  .board { --board: min(100cqw, calc(100dvh - 170px)); }
+  #game { padding-inline: max(4px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
   .board { --board: calc(100dvh - 60px); }
   .legend { display: none; }
 }
-
-/* Top/bottom edge squares are the narrowest; keep long names like Kanchanaburi on one line. */
-.square.side-top:not(.corner) .name,
-.square.side-bottom:not(.corner) .name { font-size: .78em; }

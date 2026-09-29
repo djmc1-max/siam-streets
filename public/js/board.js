@@ -125,5 +125,23 @@
     wireDetail(boardEl);
   }
 
-  window.SiamBoard = { renderBoard };
+  // Shrink a square's name just enough that no word is split or clipped.
+  // Names are only ever wrapped at spaces (never mid-word), so a word wider than the
+  // square shows up as horizontal overflow, which we fit by reducing the font size.
+  const MIN_NAME_PX = 6;
+  function fitNames() {
+    document.querySelectorAll('#board .square .name').forEach((el) => {
+      el.classList.remove('clip');
+      el.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth + 0.5 && size > MIN_NAME_PX) {
+        size -= 0.5;
+        el.style.fontSize = size + 'px';
+      }
+      // Still too wide at the floor (tiny phones): fall back to an ellipsis; tap shows the full name.
+      if (el.scrollWidth > el.clientWidth + 0.5) el.classList.add('clip');
+    });
+  }
+
+  window.SiamBoard = { renderBoard, fitNames };
 })();
