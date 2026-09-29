@@ -1,0 +1,14 @@
+{
+  "name": "siam-streets",
+  "version": "0.1.0",
+  "description": "Siam Streets - browser-based online multiplayer property board game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

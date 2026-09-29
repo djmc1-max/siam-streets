@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1120">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%BA%3C/text%3E%3C/svg%3E">
+  <title>Siam Streets</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- LANDING / ONBOARDING (GAME_DESIGN.md section 39) -->
+  <main id="landing" class="screen">
+    <div class="landing-card">
+      <h1 class="logo">Siam <span>Streets</span></h1>
+      <p class="slogan">Can you rule the streets of Siam?</p>
+
+      <label class="field-label" for="name-input">Your name</label>
+      <input id="name-input" class="name-input" type="text" maxlength="16"
+             autocomplete="off" placeholder="Enter your display name">
+
+      <p class="field-label">Choose your token</p>
+      <div id="token-grid" class="token-grid" role="radiogroup" aria-label="Player token"></div>
+
+      <div class="how-to">
+        <h2>How to play</h2>
+        <p>Roll the dice, move around Thailand, and buy up properties as you go.</p>
+        <p>Collect rent from other players when they land on your properties, build houses and hotels to earn more.</p>
+        <p>Be the last player standing to win — everyone else goes bankrupt!</p>
+      </div>
+
+      <button id="continue-btn" class="btn btn-primary" type="button" disabled>Play</button>
+    </div>
+  </main>
+
+  <!-- GAME SCREEN: BOARD (sections 3-5) -->
+  <section id="game" class="screen" hidden>
+    <header class="game-header">
+      <div id="player-badge" class="player-badge"></div>
+      <span class="header-logo">Siam Streets</span>
+    </header>
+
+    <div class="board-wrap">
+      <div id="board" class="board" aria-label="Siam Streets board">
+        <div class="board-center">
+          <h2 class="center-logo">Siam <span>Streets</span></h2>
+          <div class="dice" aria-label="Dice">
+            <div class="die" aria-hidden="true">⚀</div>
+            <div class="die" aria-hidden="true">⚁</div>
+          </div>
+          <ul id="feed" class="feed" aria-live="polite">
+            <li>🎲 Waiting for the game to start…</li>
+          </ul>
+          <button class="btn btn-primary btn-start" type="button" disabled>Start game</button>
+        </div>
+      </div>
+    </div>
+
+    <ul id="legend" class="legend" aria-label="Color groups"></ul>
+
+    <div id="square-detail" class="square-detail" hidden></div>
+  </section>
+
+  <button id="mute-btn" class="mute-btn" type="button" aria-label="Mute music" title="Mute music">🔊</button>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/landing.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
