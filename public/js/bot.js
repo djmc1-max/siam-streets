@@ -20,9 +20,11 @@
     level: 'easy',
     thinkMs: 700,
 
-    // 'pay' the fine or 'roll' for doubles
+    // 'card' (use a Get Out of Jail Free card), 'pay' the fine or 'roll' for doubles
     decideJail(game, playerId) {
-      return game.state.players[playerId].cash > JAIL_FINE_MIN_CASH ? 'pay' : 'roll';
+      const p = game.state.players[playerId];
+      if (p.jailCards.length > 0) return 'card';
+      return p.cash > JAIL_FINE_MIN_CASH ? 'pay' : 'roll';
     },
 
     // 'buy' or 'auction' for the property the bot just landed on

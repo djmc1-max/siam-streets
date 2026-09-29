@@ -91,6 +91,35 @@
     P(40, 'Sukhumvit', 'pink', 4000)
   ];
 
+  // Surprise / Treasure decks — text from GAME_DESIGN.md sections 20 and 21 (a test re-parses the doc to verify).
+  const SURPRISE_CARDS = [
+    { id: 'S1', text: 'You got blessed by a monk at Wat Pho. Collect ฿500', effect: { type: 'collect', amount: 500 } },
+    { id: 'S2', text: 'Ladyboy tipped you for a great night. Collect ฿300', effect: { type: 'collect', amount: 300 } },
+    { id: 'S3', text: 'You won a Muay Thai fight. Collect ฿1,000', effect: { type: 'collect', amount: 1000 } },
+    { id: 'S4', text: 'Your pad thai went viral on TikTok. Collect ฿200 from each player', effect: { type: 'collectEach', amount: 200 } },
+    { id: 'S5', text: 'Tourist paid full price, no haggling. Collect ฿600', effect: { type: 'collect', amount: 600 } },
+    { id: 'S6', text: 'You crashed the jet ski in Phuket. Pay ฿1,500', effect: { type: 'pay', amount: 1500 } },
+    { id: 'S7', text: 'You overstayed your visa. Pay ฿1,000', effect: { type: 'pay', amount: 1000 } },
+    { id: 'S8', text: 'You got a bar fine in Pattaya. Pay ฿800', effect: { type: 'pay', amount: 800 } },
+    { id: 'S9', text: 'Police checkpoint. Go directly to prison', effect: { type: 'jail' } },
+    { id: 'S10', text: 'Your 90 day report is due. Miss one turn', effect: { type: 'skip' } }
+  ];
+  const TREASURE_CARDS = [
+    { id: 'T1', text: 'Tax refund from Revenue Department. Collect ฿1,000', effect: { type: 'collect', amount: 1000 } },
+    { id: 'T2', text: 'Your street food stall had a great week. Collect ฿800', effect: { type: 'collect', amount: 800 } },
+    { id: 'T3', text: 'Get out of prison free', effect: { type: 'jailCard' } },
+    { id: 'T4', text: 'Get out of prison free', effect: { type: 'jailCard' } },
+    { id: 'T5', text: '90 day report forgotten. Pay ฿500 fine', effect: { type: 'pay', amount: 500 } },
+    { id: 'T6', text: 'Made a donation to the temple. Pay ฿300', effect: { type: 'pay', amount: 300 } },
+    { id: 'T7', text: 'Bought a fake Rolex on Khao San Road. Pay ฿500', effect: { type: 'pay', amount: 500 } },
+    { id: 'T8', text: 'A monkey stole your wallet in Lopburi. Pay ฿600', effect: { type: 'pay', amount: 600 } },
+    { id: 'T9', text: 'Elephant sat on your scooter. Pay ฿700', effect: { type: 'pay', amount: 700 } },
+    { id: 'T10', text: 'You lost a Muay Thai fight. Pay ฿600', effect: { type: 'pay', amount: 600 } }
+  ];
+  const CARDS = { surprise: SURPRISE_CARDS, treasure: TREASURE_CARDS };
+  const CARD_BY_ID = {};
+  SURPRISE_CARDS.concat(TREASURE_CARDS).forEach((c) => { CARD_BY_ID[c.id] = c; });
+
   const TOKENS = [
     { id: 'elephant',  name: 'Elephant',      icon: '🐘', free: true },
     { id: 'tuktuk',    name: 'Tuk Tuk',       icon: '🛺', free: true },
@@ -104,5 +133,5 @@
     { id: 'lotus',     name: 'Lotus Flower',  icon: '🌺', free: false, coins: 70 }
   ];
 
-  return { COLOR_GROUPS, BOARD, TOKENS, RENTS };
+  return { COLOR_GROUPS, BOARD, TOKENS, RENTS, CARDS, CARD_BY_ID };
 });

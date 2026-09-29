@@ -10,7 +10,7 @@
   let resolveAction = null;
   let resolveBid = null;
 
-  const BUTTONS = { roll: 'btn-roll', fine: 'btn-fine', buy: 'btn-buy', auction: 'btn-auction', end: 'btn-end' };
+  const BUTTONS = { roll: 'btn-roll', fine: 'btn-fine', card: 'btn-card', buy: 'btn-buy', auction: 'btn-auction', end: 'btn-end' };
 
   // ---------- player panel ----------
   function renderPlayers(list, startingCash) {
@@ -25,7 +25,7 @@
       card.dataset.player = p.id;
       card.style.setProperty('--ring', window.SiamTokens.COLORS[p.id % window.SiamTokens.COLORS.length]);
       card.innerHTML = '<span class="pc-token"></span><span class="pc-info"><span class="pc-name"></span><span class="pc-cash"></span></span>' +
-        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-jail" hidden></span></span>';
+        '<span class="pc-meta"><span class="pc-props"></span><span class="pc-free" hidden title="Get Out of Jail Free cards"></span><span class="pc-jail" hidden></span></span>';
       card.querySelector('.pc-token').textContent = p.icon;
       card.querySelector('.pc-jail').replaceChildren(window.SiamIcons.el('jail'));
       card.querySelector('.pc-name').textContent = p.name + (p.isBot ? ' 🤖' : '');
@@ -57,6 +57,13 @@
       void el.offsetWidth;
       el.classList.add(cls);
     });
+  }
+
+  // Get Out of Jail Free cards held (Section 21)
+  function setJailCards(id, count) {
+    const el = card(id).querySelector('.pc-free');
+    el.hidden = count <= 0;
+    el.textContent = '🆓×' + count;
   }
 
   function setCurrent(id) {
@@ -115,6 +122,7 @@
       setButtons({
         roll: avail.canRoll ? 'on' : 'off',
         fine: avail.canPayFine ? 'on' : 'hide',
+        card: avail.canUseJailCard ? 'on' : 'hide',
         end: avail.canEndTurn ? 'on' : 'off'
       });
     }
@@ -256,7 +264,7 @@
   }
 
   window.SiamUI = {
-    init, renderPlayers, setBalances, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
+    init, renderPlayers, setBalances, setJailCards, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
     idle, lock, awaitAction, showAuction, updateAuction, hideAuction, awaitBid,
     showSetup, showPlay, showWinner
   };

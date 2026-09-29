@@ -145,6 +145,7 @@
             <div id="actions" class="actions" hidden>
               <button id="btn-roll" class="btn btn-primary" type="button" disabled>Roll Dice</button>
               <button id="btn-fine" class="btn btn-secondary" type="button" hidden>Pay ฿500</button>
+              <button id="btn-card" class="btn btn-secondary" type="button" hidden>Use card</button>
               <button id="btn-buy" class="btn btn-primary" type="button" hidden>Buy</button>
               <button id="btn-auction" class="btn btn-secondary" type="button" hidden>Auction</button>
               <button id="btn-end" class="btn btn-secondary" type="button" disabled>End Turn</button>
@@ -173,6 +174,16 @@
 
     <div id="square-detail" class="square-detail" hidden></div>
 
+    <div id="card-overlay" class="card-overlay" role="dialog" aria-modal="true" aria-label="Card drawn" hidden>
+      <div id="card-face" class="card-face">
+        <div class="card-head"><span id="card-icon" class="card-icon" aria-hidden="true"></span><span id="card-deck" class="card-deck"></span></div>
+        <div id="card-who" class="card-who"></div>
+        <p id="card-text" class="card-text"></p>
+        <button id="card-ok" class="btn btn-primary card-ok" type="button">OK</button>
+        <div id="card-timer" class="card-timer" hidden><div id="card-timer-bar" class="card-timer-bar"></div></div>
+      </div>
+    </div>
+
     <div id="winner" class="winner" role="dialog" aria-modal="true" aria-label="Game over" hidden>
       <div class="winner-card">
         <div class="winner-trophy" aria-hidden="true">🏆</div>
@@ -195,6 +206,7 @@
   <script src="js/board.js"></script>
   <script src="js/tokens.js"></script>
   <script src="js/feed.js"></script>
+  <script src="js/cardview.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>
   <script src="js/landing.js"></script>

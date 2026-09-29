@@ -1,37 +1,11 @@
 'use strict';
 // Rules tests for the Siam Streets engine. Run: node --test tests/
 const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
 const { BOARD } = require('../public/js/data.js');
-const { createGame, CONSTANTS } = require('../public/js/engine.js');
-
-const DESIGN = fs.readFileSync(path.join(__dirname, '..', 'GAME_DESIGN.md'), 'utf8');
-const money = (s) => parseInt(s.replace(/[^\d]/g, ''), 10);
-
-// ---- helpers ----
-function newGame(n = 2, extra = {}) {
-  const seats = Array.from({ length: n }, (_, i) => ({ name: 'P' + i, tokenId: 't' + i, isBot: i > 0 }));
-  return createGame(Object.assign({ players: seats, startingCash: 15000 }, extra));
-}
-// Queue exact dice: rig(g, [3,4], [1,1]) makes the next rolls 3+4 then 1+1.
-function rig(g, ...rolls) {
-  const values = rolls.flat();
-  g.rng = () => { const v = values.shift(); assert.ok(v !== undefined, 'dice queue exhausted'); return (v - 1) / 6 + 0.01; };
-}
-// Put a player `total` squares before `target` so a roll of `total` lands exactly there.
-function placeBefore(g, playerId, target, total) {
-  g.state.players[playerId].pos = ((target - 1 - total + 40) % 40) + 1;
-}
-const types = (events) => events.map((e) => e.type);
+const { CONSTANTS } = require('../public/js/engine.js');
+const { assert, money, newGame, rig, placeBefore, types, sectionTable, mulberry32 } = require('./helpers.js');
 
 // ---- Section 6/7/8 tables are read straight from GAME_DESIGN.md ----
-function sectionTable(header, next) {
-  const body = DESIGN.split(header)[1].split(next)[0];
-  return body.split('\n').map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim())).filter((c) => c.length > 1);
-}
-
 test('Section 6: all 22 properties match the pricing table (price + every rent level)', () => {
   const rows = sectionTable('## 6. PROPERTY PRICING', '## 7.').filter((c) => c.length === 9 && c[0] !== 'Property' && !c[0].startsWith('---'));
   assert.equal(rows.length, 22);
@@ -92,7 +66,7 @@ test('no rent on your own property or on unowned squares', () => {
 
 // ---- Start salary ----
 test('passing Start pays 2,000; landing ON Start pays 4,000 (not both)', () => {
-  const g = newGame(); g.state.players[0].pos = 38; rig(g, [1, 4]); // 5 -> square 3 (Treasure), crosses Start
+  const g = newGame(); g.state.players[0].pos = 38; rig(g, [1, 3]); // 4 -> square 2 (Khao San Rd), crosses Start
   let ev = g.roll();
   assert.equal(g.state.players[0].cash, 17000);
   assert.deepEqual(types(ev).slice(0, 5), ['rolled', 'move', 'passStart', 'move', 'land']);
@@ -361,24 +335,7 @@ test('settings: starting Baht must be one of the Section 12 options, 2-6 players
   [10000, 15000, 20000, 25000, 30000].forEach((c) => assert.equal(newGame(2, { startingCash: c }).state.players[0].cash, c));
 });
 
-test('card squares are inert in Phase 2 (stub event only)', () => {
-  const g = newGame(); rig(g, [1, 1]); // 2 squares from Start -> square 3 (Treasure)
-  const ev = g.roll();
-  assert.ok(types(ev).includes('cardStub'));
-  assert.equal(ev.find((e) => e.type === 'cardStub').deck, 'Treasure');
-  assert.equal(g.state.players[0].cash, 15000);
-});
-
 // ---- Randomised play: many full games using only legal actions, invariants checked every step ----
-function mulberry32(seed) {
-  return function () {
-    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 function checkInvariants(g, label) {
   const st = g.state;
   st.players.forEach((p) => {

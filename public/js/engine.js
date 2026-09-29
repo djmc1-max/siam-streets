@@ -10,7 +10,7 @@
 })(typeof self !== 'undefined' ? self : this, function (data) {
   'use strict';
 
-  const { BOARD } = data;
+  const { BOARD, CARDS, CARD_BY_ID } = data;
   const N = BOARD.length; // 40
 
   const START_SQUARE = 1;
@@ -36,7 +36,9 @@
     const state = {
       players: seats.map((s, i) => ({
         id: i, name: s.name, tokenId: s.tokenId, isBot: !!s.isBot,
-        cash: startingCash, pos: START_SQUARE, jailed: false, jailTurns: 0, bankrupt: false
+        cash: startingCash, pos: START_SQUARE, jailed: false, jailTurns: 0, bankrupt: false,
+        jailCards: [],   // Get Out of Jail Free card ids held (Section 21)
+        skipTurns: 0     // turns still to miss (Surprise card 10)
       })),
       owners: {},          // squareId -> playerId
       current: 0,
@@ -46,12 +48,25 @@
       doublesCount: 0,
       extraRoll: false,    // a double was rolled: the player rolls again after their action
       songkranPot: 0,
+      decks: { surprise: [], treasure: [] },   // card ids, top of the deck first
       pending: null,       // squareId of an unowned property awaiting buy/auction
       auction: null,
       winner: null
     };
 
     const game = { state, rng: opts.rng || Math.random };
+
+    // Fisher-Yates with the injected rng, so tests can replay a deck.
+    function shuffled(ids) {
+      const a = ids.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.min(i, Math.floor(game.rng() * (i + 1)));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    state.decks.surprise = shuffled(CARDS.surprise.map((c) => c.id));
+    state.decks.treasure = shuffled(CARDS.treasure.map((c) => c.id));
 
     // ---------- helpers ----------
     const current = () => state.players[state.current];
@@ -97,6 +112,8 @@
     function declareBankrupt(p, creditor, list) {
       const released = ownedBy(p.id);
       released.forEach((id) => { delete state.owners[id]; });
+      p.jailCards.forEach((id) => state.decks.treasure.push(id)); // held jail cards go back to the deck
+      p.jailCards = [];
       p.bankrupt = true;
       p.jailed = false;
       emit(list, 'bankrupt', { playerId: p.id, creditor, released });
@@ -107,7 +124,17 @@
       state.doublesCount = 0;
       state.extraRoll = false;
       let next = state.current;
-      do { next = (next + 1) % state.players.length; } while (state.players[next].bankrupt);
+      for (;;) {
+        next = (next + 1) % state.players.length;
+        const q = state.players[next];
+        if (q.bankrupt) continue;
+        if (q.skipTurns > 0) {            // Surprise card 10: this player misses their turn
+          q.skipTurns -= 1;
+          emit(list, 'turnSkipped', { playerId: next });
+          continue;
+        }
+        break;
+      }
       state.current = next;
       state.turn += 1;
       state.phase = 'roll';
@@ -199,6 +226,43 @@
       finishAction(list);
     }
 
+    // Draws the top card of a deck and applies it automatically (Sections 20, 21). Cards return to the
+    // bottom of their deck, except Get Out of Jail Free, which the player keeps until it is used.
+    function drawCard(p, deckName, list) {
+      const deck = state.decks[deckName];
+      const id = deck.shift();
+      const card = CARD_BY_ID[id];
+      const fx = card.effect;
+      emit(list, 'cardDrawn', { playerId: p.id, deck: deckName, cardId: id, text: card.text });
+      if (fx.type !== 'jailCard') deck.push(id);
+
+      if (fx.type === 'collect') {
+        p.cash += fx.amount;
+        emit(list, 'cardEffect', { playerId: p.id, kind: 'collect', amount: fx.amount });
+      } else if (fx.type === 'pay') {
+        const r = charge(p, fx.amount, 'bank');
+        emit(list, 'cardEffect', { playerId: p.id, kind: 'pay', amount: fx.amount, paid: r.paid });
+        if (r.short) declareBankrupt(p, 'bank', list);
+      } else if (fx.type === 'collectEach') {
+        const from = [];
+        state.players.forEach((q) => {
+          if (q.id === p.id || q.bankrupt) return;
+          const r = charge(q, fx.amount, p.id);
+          from.push(q.id);
+          if (r.short) declareBankrupt(q, p.id, list);
+        });
+        emit(list, 'cardEffect', { playerId: p.id, kind: 'collectEach', amount: fx.amount, from });
+      } else if (fx.type === 'jail') {
+        goToJail(p, list, 'card');
+      } else if (fx.type === 'skip') {
+        p.skipTurns += 1;
+        emit(list, 'cardEffect', { playerId: p.id, kind: 'skip' });
+      } else if (fx.type === 'jailCard') {
+        p.jailCards.push(id);
+        emit(list, 'cardKept', { playerId: p.id, cardId: id, count: p.jailCards.length });
+      }
+    }
+
     function resolveLanding(p, total, list) {
       const sq = BOARD[p.pos - 1];
       if (sq.type === 'corner') {
@@ -216,7 +280,7 @@
         emit(list, 'tax', { playerId: p.id, square: sq.id, amount, paid: r.paid });
         if (r.short) declareBankrupt(p, 'bank', list);
       } else if (sq.type === 'card') {
-        emit(list, 'cardStub', { playerId: p.id, square: sq.id, deck: sq.name });
+        drawCard(p, sq.name === 'Surprise' ? 'surprise' : 'treasure', list);
       } else {
         const ownerId = state.owners[sq.id];
         if (ownerId === undefined) {
@@ -304,6 +368,20 @@
       return list;
     };
 
+    // Section 13: a kept Get Out of Jail Free card is one way out. It goes back to the bottom of the Treasure deck.
+    game.useJailCard = function () {
+      assertPhase('roll');
+      const p = current();
+      if (!p.jailed) throw new Error('Player is not in prison');
+      if (p.jailCards.length === 0) throw new Error('No Get Out of Jail Free card');
+      const list = [];
+      const id = p.jailCards.pop();
+      state.decks.treasure.push(id);
+      p.jailed = false; p.jailTurns = 0;
+      emit(list, 'jailCardUsed', { playerId: p.id, cardId: id, count: p.jailCards.length });
+      return list;
+    };
+
     game.buy = function () {
       assertPhase('action');
       const p = current();
@@ -370,6 +448,7 @@
         actor: state.phase === 'auction' ? state.auction.turn : state.current,
         canRoll: state.phase === 'roll',
         canPayFine: state.phase === 'roll' && p.jailed && p.cash >= JAIL_FINE,
+        canUseJailCard: state.phase === 'roll' && p.jailed && p.jailCards.length > 0,
         canBuy: state.phase === 'action' && !!sq && p.cash >= sq.price,
         canAuction: state.phase === 'action' && !!sq,
         canEndTurn: state.phase === 'end',

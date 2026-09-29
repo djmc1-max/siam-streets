@@ -67,6 +67,8 @@
     switch (action.type) {
       case 'roll': return e.roll();
       case 'fine': return e.payJailFine();
+      case 'card':          // the Use card button
+      case 'jailCard': return e.useJailCard();
       case 'buy': return e.buy();
       case 'auction': return e.declineToAuction();
       case 'end': return e.endTurn();
@@ -100,6 +102,7 @@
     const av = e.availableActions();
     switch (e.state.phase) {
       case 'roll':
+        if (av.canUseJailCard && bot.decideJail(e, actor.id) === 'card') return { type: 'jailCard' };
         return av.canPayFine && bot.decideJail(e, actor.id) === 'pay' ? { type: 'fine' } : { type: 'roll' };
       case 'action':
         return { type: av.canBuy && bot.decideOffer(e, actor.id, SiamGame.botRng) === 'buy' ? 'buy' : 'auction' };
@@ -211,10 +214,31 @@
       case 'jailStay':
         Feed.add('#jail', n + ' stays in prison (attempt ' + ev.attempt + '/' + ev.max + ')');
         break;
-      case 'cardStub':
-        Feed.add(ev.deck === 'Surprise' ? '❓' : '#chest', n + ' landed on ' + ev.deck + ' (cards coming soon)');
+      case 'cardDrawn': {
+        const deckName = ev.deck === 'surprise' ? 'Surprise' : 'Treasure';
+        const bot = SiamGame.engine.state.players[ev.playerId].isBot;
+        // the human's card waits for a tap before its effect is shown; bots' cards continue by themselves
+        await window.SiamCardView.show({ deck: ev.deck, text: ev.text, playerName: n, waitForTap: !bot });
+        Feed.add(ev.deck === 'surprise' ? '❓' : '#chest', n + ' drew a ' + deckName + ' card — ' + ev.text);
+        break;
+      }
+      case 'cardEffect':
+        if (ev.kind === 'skip') Feed.add('🚫', n + ' will miss their next turn');
+        break;
+      case 'cardKept':
+        UI.setJailCards(ev.playerId, ev.count);
+        Feed.add('🆓', n + ' keeps a Get Out of Jail Free card');
+        break;
+      case 'jailCardUsed':
+        UI.setJailCards(ev.playerId, ev.count);
+        UI.setJailed(ev.playerId, false);
+        Feed.add('🆓', n + ' used a Get Out of Jail Free card');
+        break;
+      case 'turnSkipped':
+        Feed.add('🚫', n + ' misses this turn');
         break;
       case 'bankrupt':
+        UI.setJailCards(ev.playerId, 0);
         ev.released.forEach((sq) => UI.setOwner(sq, null));
         UI.markBankrupt(ev.playerId);
         Tokens.remove(ev.playerId);
