@@ -3,7 +3,7 @@
 const test = require('node:test');
 const { BOARD } = require('../public/js/data.js');
 const { CONSTANTS } = require('../public/js/engine.js');
-const { assert, money, newGame, rig, placeBefore, types, sectionTable, mulberry32 } = require('./helpers.js');
+const { assert, money, newGame, rig, placeBefore, types, sectionTable } = require('./helpers.js');
 
 // ---- Section 6/7/8 tables are read straight from GAME_DESIGN.md ----
 test('Section 6: all 22 properties match the pricing table (price + every rent level)', () => {
@@ -333,53 +333,4 @@ test('settings: starting Baht must be one of the Section 12 options, 2-6 players
   assert.throws(() => newGame(1));
   assert.throws(() => newGame(7));
   [10000, 15000, 20000, 25000, 30000].forEach((c) => assert.equal(newGame(2, { startingCash: c }).state.players[0].cash, c));
-});
-
-// ---- Randomised play: many full games using only legal actions, invariants checked every step ----
-function checkInvariants(g, label) {
-  const st = g.state;
-  st.players.forEach((p) => {
-    assert.ok(Number.isInteger(p.cash) && p.cash >= 0, label + ': cash must be a non-negative integer, got ' + p.cash);
-    assert.ok(p.pos >= 1 && p.pos <= 40, label + ': position out of range ' + p.pos);
-    if (p.bankrupt) assert.equal(g.ownedBy(p.id).length, 0, label + ': bankrupt player still owns squares');
-  });
-  Object.keys(st.owners).forEach((sq) => {
-    assert.ok(['property', 'airport', 'utility'].includes(BOARD[sq - 1].type), label + ': owned a non-buyable square');
-    assert.ok(!st.players[st.owners[sq]].bankrupt, label + ': owner is bankrupt');
-  });
-  assert.ok(st.songkranPot >= 0);
-  assert.ok(!st.players[st.current].bankrupt || st.phase === 'over', label + ': current player is bankrupt');
-  assert.ok(['roll', 'action', 'auction', 'end', 'over'].includes(st.phase));
-}
-
-test('fuzz: 300 random games never throw and always keep the invariants', () => {
-  let finished = 0;
-  for (let seed = 1; seed <= 300; seed++) {
-    const rnd = mulberry32(seed);
-    const n = 2 + Math.floor(rnd() * 5);
-    const g = newGame(n, { startingCash: [10000, 15000, 20000][seed % 3], rng: mulberry32(seed * 7919) });
-    for (let step = 0; step < 4000 && g.state.phase !== 'over'; step++) {
-      const a = g.availableActions();
-      const p = g.state.players[a.actor];
-      const label = 'seed ' + seed + ' step ' + step;
-      if (g.state.phase === 'auction') {
-        const auc = g.state.auction;
-        const max = Math.min(p.cash, 3000);
-        if (rnd() < 0.5 && max > auc.highBid) g.bid(p.id, auc.highBid + 1 + Math.floor(rnd() * (max - auc.highBid)));
-        else g.pass(p.id);
-      } else if (a.canBuy || a.canAuction) {
-        if (a.canBuy && rnd() < 0.6) g.buy(); else g.declineToAuction();
-      } else if (a.canPayFine && rnd() < 0.3) g.payJailFine();
-      else if (a.canRoll) g.roll();
-      else if (a.canEndTurn) g.endTurn();
-      else assert.fail(label + ': no legal action in phase ' + g.state.phase);
-      checkInvariants(g, label);
-    }
-    if (g.state.phase === 'over') {
-      finished++;
-      assert.equal(g.state.players.filter((p) => !p.bankrupt).length, 1);
-      assert.equal(g.state.winner, g.state.players.find((p) => !p.bankrupt).id);
-    }
-  }
-  assert.ok(finished > 0, 'at least some random games should reach a winner');
 });

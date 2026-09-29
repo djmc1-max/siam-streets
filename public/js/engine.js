@@ -3,11 +3,13 @@
 // immediately; each event carries a `balances` snapshot so the UI can animate money in
 // sync. Runs in the browser today and moves to the Node server unchanged in Phase 4.
 (function (root, factory) {
-  const data = (typeof module === 'object' && module.exports) ? require('./data.js') : root.SiamData;
-  const api = factory(data);
+  const node = typeof module === 'object' && module.exports;
+  const data = node ? require('./data.js') : root.SiamData;
+  const rules = node ? require('./rules.js') : root.SiamRules;
+  const api = factory(data, rules);
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.SiamEngine = api;
-})(typeof self !== 'undefined' ? self : this, function (data) {
+})(typeof self !== 'undefined' ? self : this, function (data, Rules) {
   'use strict';
 
   const { BOARD, CARDS, CARD_BY_ID } = data;
@@ -24,7 +26,6 @@
   const TAX_10_CAP = 2000;
   const LUXURY_TAX = 1000;
   const AIRPORT_RENT = [500, 1000, 2000, 4000];
-  const UTILITY_MULTIPLIER = { 1: 40, 2: 100 };
   const STARTING_CASH_OPTIONS = [10000, 15000, 20000, 25000, 30000];
 
   function createGame(opts) {
@@ -41,6 +42,8 @@
         skipTurns: 0     // turns still to miss (Surprise card 10)
       })),
       owners: {},          // squareId -> playerId
+      levels: {},          // squareId -> 1-4 houses, 5 = hotel (absent = none)
+      mortgaged: {},       // squareId -> true
       current: 0,
       turn: 1,
       phase: 'roll',       // roll | action | auction | end | over
@@ -79,13 +82,7 @@
     };
     const ownedBy = (playerId) => Object.keys(state.owners).filter((id) => state.owners[id] === playerId).map(Number);
 
-    function rentFor(sq, ownerId, diceTotal) {
-      if (sq.type === 'property') return sq.rent[0]; // unimproved rent, Section 6 (houses arrive in Phase 3)
-      const owned = ownedBy(ownerId).map((id) => BOARD[id - 1]);
-      if (sq.type === 'airport') return AIRPORT_RENT[owned.filter((s) => s.type === 'airport').length - 1];
-      if (sq.type === 'utility') return diceTotal * UTILITY_MULTIPLIER[Math.min(2, owned.filter((s) => s.type === 'utility').length)];
-      return 0;
-    }
+    const rentFor = (sq, ownerId, diceTotal) => Rules.rentFor(state, sq, ownerId, diceTotal);
 
     // Moves money. creditor is a player id, 'bank' or 'pot'. If the payer is short, all their
     // cash is handed over (a tax shortfall goes to the bank) and the caller declares bankruptcy.
@@ -111,7 +108,7 @@
     // Section 16: cash to the creditor (already moved by charge), properties return to the bank.
     function declareBankrupt(p, creditor, list) {
       const released = ownedBy(p.id);
-      released.forEach((id) => { delete state.owners[id]; });
+      released.forEach((id) => { delete state.owners[id]; delete state.levels[id]; delete state.mortgaged[id]; });
       p.jailCards.forEach((id) => state.decks.treasure.push(id)); // held jail cards go back to the deck
       p.jailCards = [];
       p.bankrupt = true;
@@ -292,6 +289,8 @@
             state.phase = 'action';
             emit(list, 'offer', { playerId: p.id, square: sq.id, price: sq.price });
           }
+        } else if (ownerId !== p.id && state.mortgaged[sq.id]) {
+          emit(list, 'rentMortgaged', { playerId: p.id, ownerId, square: sq.id });   // Section 15: no rent while mortgaged
         } else if (ownerId !== p.id) {
           const amount = rentFor(sq, ownerId, total);
           const r = charge(p, amount, ownerId);
@@ -365,6 +364,57 @@
       charge(p, JAIL_FINE, 'bank');
       p.jailed = false; p.jailTurns = 0;
       emit(list, 'jailFine', { playerId: p.id, amount: JAIL_FINE });
+      return list;
+    };
+
+    // Property management (mortgage / build / sell): your own turn, any step of it except auctions.
+    function assertCanManage(pid) {
+      if (pid !== state.current) throw new Error('You can only manage properties on your own turn');
+      if (['roll', 'action', 'end'].indexOf(state.phase) === -1) throw new Error('Cannot manage properties now (' + state.phase + ')');
+    }
+
+    game.mortgage = function (pid, sqId) {
+      assertCanManage(pid);
+      const c = Rules.checkMortgage(state, pid, sqId);
+      if (!c.ok) throw new Error(c.reason);
+      const list = [];
+      state.mortgaged[sqId] = true;
+      state.players[pid].cash += c.amount;
+      emit(list, 'mortgaged', { playerId: pid, square: sqId, amount: c.amount });
+      return list;
+    };
+
+    game.unmortgage = function (pid, sqId) {
+      assertCanManage(pid);
+      const c = Rules.checkUnmortgage(state, pid, sqId);
+      if (!c.ok) throw new Error(c.reason);
+      const list = [];
+      state.players[pid].cash -= c.amount;
+      delete state.mortgaged[sqId];
+      emit(list, 'unmortgaged', { playerId: pid, square: sqId, amount: c.amount });
+      return list;
+    };
+
+    game.build = function (pid, sqId) {
+      assertCanManage(pid);
+      const c = Rules.checkBuild(state, pid, sqId);
+      if (!c.ok) throw new Error(c.reason);
+      const list = [];
+      state.players[pid].cash -= c.amount;
+      state.levels[sqId] = c.toLevel;
+      emit(list, 'built', { playerId: pid, square: sqId, level: c.toLevel, cost: c.amount, hotel: c.toLevel === Rules.HOTEL });
+      return list;
+    };
+
+    game.sellBuilding = function (pid, sqId) {
+      assertCanManage(pid);
+      const c = Rules.checkSell(state, pid, sqId);
+      if (!c.ok) throw new Error(c.reason);
+      const list = [];
+      const wasHotel = Rules.levelOf(state, sqId) === Rules.HOTEL;
+      if (c.toLevel === 0) delete state.levels[sqId]; else state.levels[sqId] = c.toLevel;
+      state.players[pid].cash += c.amount;
+      emit(list, 'sold', { playerId: pid, square: sqId, level: c.toLevel, refund: c.amount, hotel: wasHotel });
       return list;
     };
 
@@ -452,6 +502,7 @@
         canBuy: state.phase === 'action' && !!sq && p.cash >= sq.price,
         canAuction: state.phase === 'action' && !!sq,
         canEndTurn: state.phase === 'end',
+        canManage: ['roll', 'action', 'end'].indexOf(state.phase) !== -1,
         canBid: state.phase === 'auction'
       };
     };

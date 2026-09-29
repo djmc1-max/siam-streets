@@ -9,6 +9,8 @@
   let cash = [];
   let resolveAction = null;
   let resolveBid = null;
+  const changeHooks = [];   // called whenever the human can / cannot act (the manager redraws itself)
+  const fire = () => changeHooks.forEach((fn) => fn());
 
   const BUTTONS = { roll: 'btn-roll', fine: 'btn-fine', card: 'btn-card', buy: 'btn-buy', auction: 'btn-auction', end: 'btn-end' };
 
@@ -81,7 +83,7 @@
     if (!sq) return;
     const old = sq.querySelector('.owner-badge');
     if (old) old.remove();
-    if (playerId === null) { delete owners[squareId]; } else {
+    if (playerId === null) { delete owners[squareId]; setLevel(squareId, 0); setMortgaged(squareId, false); } else {
       owners[squareId] = playerId;
       const badge = document.createElement('span');
       badge.className = 'owner-badge';
@@ -92,8 +94,31 @@
     }
     refreshCards();
   }
+  const squareEl = (id) => document.querySelector('#board .square[data-id="' + id + '"]');
+
+  // Houses (1-4 small green blocks) or a hotel (one red block) drawn on the colour strip.
+  function setLevel(squareId, level) {
+    const sq = squareEl(squareId);
+    if (!sq) return;
+    const strip = sq.querySelector('.strip');
+    if (!strip) return;
+    strip.replaceChildren();
+    sq.dataset.level = level || 0;
+    if (!level) return;
+    if (level >= 5) {
+      const h = document.createElement('b'); h.className = 'hotel'; h.title = 'Hotel'; strip.appendChild(h);
+    } else {
+      for (let i = 0; i < level; i++) { const h = document.createElement('i'); h.className = 'house'; strip.appendChild(h); }
+      strip.title = level + (level === 1 ? ' house' : ' houses');
+    }
+  }
+  function setMortgaged(squareId, on) {
+    const sq = squareEl(squareId);
+    if (sq) sq.classList.toggle('mortgaged', !!on);
+  }
   function clearOwners() {
     document.querySelectorAll('#board .owner-badge').forEach((b) => b.remove());
+    document.querySelectorAll('#board .square').forEach((s) => { s.classList.remove('mortgaged'); if (s.dataset.level && s.dataset.level !== '0') setLevel(s.dataset.id, 0); });
     owners = {};
   }
 
@@ -110,6 +135,19 @@
   function idle() { setButtons({ roll: 'off', end: 'off' }); }
   function lock() {
     Object.keys(BUTTONS).forEach((k) => { $(BUTTONS[k]).disabled = true; });
+    fire();
+  }
+
+  // The manager / trade dialogs hand actions to the turn loop through here. Only accepted while the loop
+  // is waiting for the human (never mid-animation, never during an auction).
+  const canAct = () => resolveAction !== null;
+  function submit(action) {
+    if (!resolveAction) return false;
+    const done = resolveAction;
+    resolveAction = null;
+    lock();
+    done(action);
+    return true;
   }
 
   // Enables exactly what the engine allows the human to do, and resolves with their choice.
@@ -126,7 +164,9 @@
         end: avail.canEndTurn ? 'on' : 'off'
       });
     }
-    return new Promise((resolve) => { resolveAction = resolve; });
+    const promise = new Promise((resolve) => { resolveAction = resolve; });
+    fire();
+    return promise;
   }
 
   function bindButtons() {
@@ -143,6 +183,7 @@
 
   // ---------- auction ----------
   function showAuction(squareName, price) {
+    $('manage-bar').hidden = true;      // no property management during an auction
     $('actions').hidden = true;
     $('auction').hidden = false;
     $('auction-title').textContent = '🔨 Auction: ' + squareName + ' (' + fmtBaht(price) + ')';
@@ -151,6 +192,7 @@
   }
   function updateAuction(text) { $('auction-status').textContent = text; }
   function hideAuction() {
+    $('manage-bar').hidden = false;
     $('auction').hidden = true;
     $('actions').hidden = false;
     if (resolveBid) resolveBid = null;
@@ -212,12 +254,14 @@
   }
 
   function showSetup() {
+    $('manage-bar').hidden = true;
     $('setup').hidden = false;
     $('actions').hidden = true;
     $('auction').hidden = true;
     $('players').hidden = true;
   }
   function showPlay() {
+    $('manage-bar').hidden = false;
     $('setup').hidden = true;
     $('actions').hidden = false;
   }
@@ -240,7 +284,8 @@
       const center = document.querySelector('#board .board-center');
       const target = phone.matches ? dock : center;
       (tallPhone.matches ? $('feed-slot') : center).appendChild($('feed'));
-      ['setup', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
+      // order: setup, manage bar, actions, auction (in the dock the manage bar sits above the big buttons)
+      ['setup', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
       $('feed').scrollTop = $('feed').scrollHeight;
       measure();
     };
@@ -265,7 +310,7 @@
 
   window.SiamUI = {
     init, renderPlayers, setBalances, setJailCards, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
-    idle, lock, awaitAction, showAuction, updateAuction, hideAuction, awaitBid,
+    idle, lock, awaitAction, submit, canAct, onChange: (fn) => changeHooks.push(fn), setLevel, setMortgaged, showAuction, updateAuction, hideAuction, awaitBid,
     showSetup, showPlay, showWinner
   };
 })();

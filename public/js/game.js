@@ -10,12 +10,14 @@
   const Dice = window.SiamDice;
 
   const BOT_NAMES = ['Malee', 'Somsak', 'Niran', 'Suda', 'Anan'];
+  const botMgmt = { turn: -1, n: 0 };   // property-management actions a bot has taken this turn
 
   const SiamGame = {
     human: null,            // { name, token } from the landing screen
     engine: null,
     botRng: randomFloat,    // separate from the dice rng so bot choices never disturb the dice
     diceRng: randomFloat,
+    humanId: 0,             // the human always sits in seat 0
     runId: 0
   };
 
@@ -71,6 +73,10 @@
       case 'jailCard': return e.useJailCard();
       case 'buy': return e.buy();
       case 'auction': return e.declineToAuction();
+      case 'mortgage': return e.mortgage(actor.id, action.square);
+      case 'unmortgage': return e.unmortgage(actor.id, action.square);
+      case 'build': return e.build(actor.id, action.square);
+      case 'sell': return e.sellBuilding(actor.id, action.square);
       case 'end': return e.endTurn();
       case 'bid': return e.bid(actor.id, action.amount);
       case 'pass': return e.pass(actor.id);
@@ -100,6 +106,18 @@
     UI.idle();
     await sleep(bot.thinkMs);
     const av = e.availableActions();
+
+    // Easy bots tidy their properties at most three times a turn, before rolling or before ending the turn
+    if ((e.state.phase === 'roll' || e.state.phase === 'end') && av.canManage) {
+      if (botMgmt.turn !== e.state.turn) { botMgmt.turn = e.state.turn; botMgmt.n = 0; }
+      if (botMgmt.n < 3) {
+        const unm = bot.decideUnmortgage(e, actor.id);
+        if (unm) { botMgmt.n++; return { type: 'unmortgage', square: unm }; }
+        const bld = bot.decideBuild(e, actor.id, SiamGame.botRng);
+        if (bld) { botMgmt.n++; return { type: 'build', square: bld }; }
+      }
+    }
+
     switch (e.state.phase) {
       case 'roll':
         if (av.canUseJailCard && bot.decideJail(e, actor.id) === 'card') return { type: 'jailCard' };
@@ -197,6 +215,25 @@
         Feed.add('💦', ev.amount > 0
           ? n + ' landed on Songkran and collected ' + fmtBaht(ev.amount)
           : n + ' landed on Songkran — the pot is empty');
+        break;
+      case 'mortgaged':
+        UI.setMortgaged(ev.square, true);
+        Feed.add('🏦', n + ' mortgaged ' + sqName(ev.square) + ' for ' + fmtBaht(ev.amount));
+        break;
+      case 'unmortgaged':
+        UI.setMortgaged(ev.square, false);
+        Feed.add('🏦', n + ' unmortgaged ' + sqName(ev.square) + ' for ' + fmtBaht(ev.amount));
+        break;
+      case 'built':
+        UI.setLevel(ev.square, ev.level);
+        Feed.add(ev.hotel ? '🏨' : '🏠', n + ' built a ' + (ev.hotel ? 'hotel' : 'house') + ' on ' + sqName(ev.square));
+        break;
+      case 'sold':
+        UI.setLevel(ev.square, ev.level);
+        Feed.add('💵', n + ' sold a ' + (ev.hotel ? 'hotel' : 'house') + ' on ' + sqName(ev.square) + ' for ' + fmtBaht(ev.refund));
+        break;
+      case 'rentMortgaged':
+        Feed.add('🏦', n + ' landed on ' + sqName(ev.square) + ' — mortgaged, so no rent');
         break;
       case 'jailed':
         UI.setJailed(ev.playerId, true);

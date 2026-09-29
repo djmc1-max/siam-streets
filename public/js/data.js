@@ -91,6 +91,18 @@
     P(40, 'Sukhumvit', 'pink', 4000)
   ];
 
+  // Build costs per colour group — GAME_DESIGN.md section 9 (a test re-parses the doc to verify).
+  const BUILD_COST = {
+    red: { house: 500, hotel: 500 },
+    orange: { house: 500, hotel: 500 },
+    yellow: { house: 1000, hotel: 1000 },
+    green: { house: 1000, hotel: 1000 },
+    blue: { house: 1500, hotel: 1500 },
+    purple: { house: 1500, hotel: 1500 },
+    brown: { house: 2000, hotel: 2000 },
+    pink: { house: 2000, hotel: 2000 }
+  };
+
   // Surprise / Treasure decks — text from GAME_DESIGN.md sections 20 and 21 (a test re-parses the doc to verify).
   const SURPRISE_CARDS = [
     { id: 'S1', text: 'You got blessed by a monk at Wat Pho. Collect ฿500', effect: { type: 'collect', amount: 500 } },
@@ -133,5 +145,5 @@
     { id: 'lotus',     name: 'Lotus Flower',  icon: '🌺', free: false, coins: 70 }
   ];
 
-  return { COLOR_GROUPS, BOARD, TOKENS, RENTS, CARDS, CARD_BY_ID };
+  return { COLOR_GROUPS, BOARD, TOKENS, RENTS, BUILD_COST, CARDS, CARD_BY_ID };
 });

@@ -25,6 +25,7 @@
 
   window.SiamAudio.init();
   window.SiamUI.init((settings) => window.SiamGame.start(settings));
+  window.SiamManager.init();
   window.SiamLanding.init(showGame);
 
   let resizeFrame = 0;
