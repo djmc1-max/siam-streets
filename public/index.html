@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0620">
+  <meta name="theme-color" content="#0b1120">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%BA%3C/text%3E%3C/svg%3E">
   <title>Siam Streets</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/board.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/auction.css">
 </head>
 <body>
 
@@ -86,7 +83,11 @@
   <!-- LANDING / ONBOARDING (GAME_DESIGN.md section 39) -->
   <main id="landing" class="screen">
     <div class="landing-card">
-      <h1 class="logo" aria-label="Siam Streets"><svg class="logo-emblem" viewBox="0 0 600 330" aria-hidden="true" focusable="false"><use href="#logo-emblem"/></svg></h1>
+      <h1 class="logo" aria-label="Siam Streets">
+        <span class="logo-word" aria-hidden="true">Siam</span>
+        <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
+        <span class="logo-word" aria-hidden="true">Streets</span>
+      </h1>
       <p class="slogan">Can you rule the streets of Siam?</p>
 
       <label class="field-label" for="name-input">Your name</label>
@@ -115,38 +116,31 @@
     </header>
 
     <div class="game-main">
-      <aside id="feed-panel" class="feed-panel" aria-label="Activity feed">
-        <button id="feed-toggle" class="fp-head" type="button" aria-expanded="false" aria-controls="feed">
-          <span class="fp-title">Activity</span>
-          <span id="feed-latest" class="fp-latest">Choose your settings and start the game</span>
-          <span class="fp-chev" aria-hidden="true">▾</span>
-        </button>
-        <ul id="feed" class="feed" aria-live="polite">
-          <li><span class="feed-icon">🎲</span><span>Choose your settings and start the game</span></li>
-        </ul>
-      </aside>
-
       <aside id="players" class="players" aria-label="Players" hidden></aside>
+
+      <!-- Phones: ui.js moves the activity feed in here so it fills the space above the board -->
+      <div id="feed-slot" class="feed-slot"></div>
 
       <div class="board-wrap">
         <div id="board" class="board" aria-label="Siam Streets board">
           <div id="token-layer" class="token-layer" aria-hidden="true"></div>
           <div class="board-center">
-            <h2 class="logo logo--compact" aria-label="Siam Streets"><svg class="logo-emblem" viewBox="0 0 600 330" aria-hidden="true" focusable="false"><use href="#logo-emblem"/></svg></h2>
+            <h2 class="logo logo--compact" aria-label="Siam Streets">
+              <span class="logo-word" aria-hidden="true">Siam</span>
+              <span class="logo-word" aria-hidden="true">Streets</span>
+              <svg class="logo-orn" aria-hidden="true"><use href="#logo-orn"/></svg>
+            </h2>
             <div id="dice" class="dice" role="img" aria-label="Two dice"></div>
+            <ul id="feed" class="feed" aria-live="polite">
+              <li><span class="feed-icon">🎲</span><span>Choose your settings and start the game</span></li>
+            </ul>
+
             <div id="setup" class="setup">
               <label>Starting ฿ <select id="setup-cash"></select></label>
               <label>Bots <select id="setup-bots"></select></label>
-              <div class="setup-level-row"><span class="setup-level-label">Bot level</span>
-                <div id="setup-level" class="seg" role="radiogroup" aria-label="Bot difficulty">
-                  <button type="button" class="seg-btn" role="radio" data-level="easy" aria-checked="true">Easy</button>
-                  <button type="button" class="seg-btn" role="radio" data-level="hard" aria-checked="false">Hard</button>
-                </div>
-              </div>
+              <span class="setup-level">Bot level: Easy</span>
               <button id="btn-start" class="btn btn-primary btn-start" type="button">Start game</button>
             </div>
-
-            <div id="think" class="think" role="status" hidden></div>
 
             <div id="debt-banner" class="debt-banner" role="alert" hidden></div>
 
@@ -165,19 +159,28 @@
               <button id="btn-bankrupt" class="btn btn-danger" type="button" hidden>Declare bankruptcy</button>
             </div>
 
+            <div id="auction" class="auction" hidden>
+              <div id="auction-title" class="auction-title"></div>
+              <div id="auction-status" class="auction-status"></div>
+              <div id="auction-controls" class="auction-controls" hidden>
+                <input id="bid-input" type="number" inputmode="numeric" step="1" min="1" aria-label="Your bid in Baht">
+                <button id="bid-plus10" class="btn btn-secondary" type="button">+10</button>
+                <button id="bid-plus100" class="btn btn-secondary" type="button">+100</button>
+                <button id="bid-submit" class="btn btn-primary" type="button">Bid</button>
+                <button id="bid-pass" class="btn btn-secondary" type="button">Pass</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <ul id="legend" class="legend" aria-label="Color groups"></ul>
+
     <!-- Phones: the controls (setup / actions / auction) are moved in here by ui.js -->
     <div id="dock" class="dock"></div>
 
-    <div id="auction-stage" class="auction-stage" role="dialog" aria-modal="true" aria-label="Auction" hidden></div>
-
-    <div id="trade-watch" class="trade-watch" role="status" aria-live="polite" hidden></div>
-
-    <div id="square-detail" class="sq-popup" hidden></div>
+    <div id="square-detail" class="square-detail" hidden></div>
 
     <div id="manager" class="manager" role="dialog" aria-modal="true" aria-label="Your properties" hidden>
       <div class="manager-panel">
@@ -233,11 +236,8 @@
     </div>
   </section>
 
-  <div id="show" class="show" aria-hidden="true"></div>
-
   <button id="mute-btn" class="mute-btn" type="button" aria-label="Mute music" title="Mute music">🔊</button>
 
-  <script src="js/palette.js"></script>
   <script src="js/data.js"></script>
   <script src="js/util.js"></script>
   <script src="js/rules.js"></script>
@@ -246,17 +246,13 @@
   <script src="js/audio.js"></script>
   <script src="js/dice.js"></script>
   <script src="js/icons.js"></script>
-  <script src="js/art.js"></script>
   <script src="js/board.js"></script>
   <script src="js/tokens.js"></script>
   <script src="js/feed.js"></script>
   <script src="js/cardview.js"></script>
-  <script src="js/auctionstage.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/manager.js"></script>
-  <script src="js/popup.js"></script>
   <script src="js/trade.js"></script>
-  <script src="js/show.js"></script>
   <script src="js/game.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/main.js"></script>

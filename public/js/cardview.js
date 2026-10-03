@@ -1,7 +1,7 @@
 // Card reveal (Sections 20/21). The human's card waits for a tap; a bot's card continues on its own.
 (function () {
   const $ = (id) => document.getElementById(id);
-  const AUTO_MS = 4500;   // bots' cards stay up 2 s longer than before so the card can be read before its effect
+  const AUTO_MS = 2500;
 
   const DECKS = {
     surprise: { title: 'Surprise', icon: () => { const s = document.createElement('span'); s.className = 'card-q'; s.textContent = '❓'; return s; } },
@@ -11,7 +11,6 @@
   // Resolves once the card has been dismissed (tap / OK / Enter) or, for bots, after a short pause.
   function show({ deck, text, playerName, waitForTap }) {
     const overlay = $('card-overlay');
-    if (window.SiamPopup) window.SiamPopup.hide();
     const face = $('card-face');
     const meta = DECKS[deck];
     face.className = 'card-face card-' + deck;

@@ -26,7 +26,6 @@
   window.SiamAudio.init();
   window.SiamUI.init((settings) => window.SiamGame.start(settings));
   window.SiamManager.init();
-  window.SiamPopup.init();
   window.SiamTrade.init();
   window.SiamLanding.init(showGame);
 

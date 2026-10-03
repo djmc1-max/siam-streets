@@ -256,11 +256,17 @@
         finishAction(list);
         return;
       }
-      // Open bidding (Section 18): everyone except the decliner may bid at any time. The engine has no clock;
-      // whoever runs the game decides when the auction is over and calls closeAuction().
-      state.auction = { square: sq.id, decliner: decliner.id, bidders: order, highBid: 0, highBidder: null };
+      state.auction = { square: sq.id, decliner: decliner.id, active: order.slice(), turn: order[0], highBid: 0, highBidder: null };
       state.phase = 'auction';
       emit(list, 'auctionStart', { square: sq.id, decliner: decliner.id, bidders: order, reason });
+    }
+
+    function nextActiveAfter(a, afterId) {
+      for (let i = 1; i <= state.players.length; i++) {
+        const id = (afterId + i) % state.players.length;
+        if (a.active.indexOf(id) !== -1) return id;
+      }
+      return null;
     }
 
     function finishAuction(list) {
@@ -584,21 +590,28 @@
       assertPhase('auction');
       const a = state.auction;
       const p = state.players[playerId];
-      if (!p || a.bidders.indexOf(playerId) === -1) throw new Error('This player is not allowed to bid (the player who declined cannot bid)');
-      if (!Number.isInteger(amount) || amount < 1 || amount <= a.highBid) throw new Error('Bid must be a whole number higher than ' + a.highBid);
+      if (a.turn !== playerId) throw new Error('Not this player\'s turn to bid');
+      if (!Number.isInteger(amount) || amount <= a.highBid) throw new Error('Bid must be higher than ' + a.highBid);
       if (amount > p.cash) throw new Error('Bid exceeds available Baht');
       const list = [];
       a.highBid = amount;
       a.highBidder = playerId;
       emit(list, 'auctionBid', { playerId, square: a.square, amount });
+      if (a.active.length === 1) finishAuction(list);
+      else a.turn = nextActiveAfter(a, playerId);
       return list;
     };
 
-    // The time is up: the highest bidder pays and owns the property; no bids means no sale.
-    game.closeAuction = function () {
+    game.pass = function (playerId) {
       assertPhase('auction');
+      const a = state.auction;
+      if (a.turn !== playerId) throw new Error('Not this player\'s turn to bid');
       const list = [];
-      finishAuction(list);
+      a.active = a.active.filter((id) => id !== playerId);
+      emit(list, 'auctionPass', { playerId, square: a.square });
+      const onlyLeaderLeft = a.highBidder !== null && a.active.length === 1 && a.active[0] === a.highBidder;
+      if (a.active.length === 0 || onlyLeaderLeft) finishAuction(list);
+      else a.turn = nextActiveAfter(a, playerId);
       return list;
     };
 
@@ -614,7 +627,7 @@
       const p = current();
       const sq = state.pending ? BOARD[state.pending - 1] : null;
       return {
-        actor: state.trade ? state.trade.to : state.current,
+        actor: state.trade ? state.trade.to : state.phase === 'auction' ? state.auction.turn : state.current,
         trade: state.trade,
         canTrade: !state.trade && ['roll', 'action', 'end', 'debt'].indexOf(state.phase) !== -1,
         canRoll: state.phase === 'roll',
@@ -633,7 +646,7 @@
 
     // Every action that can change anyone's cash ends by sweeping cash into open debts and, if the current
     // player's last debt just cleared, letting the interrupted turn continue.
-    ['roll', 'payJailFine', 'useJailCard', 'buy', 'declineToAuction', 'bid', 'closeAuction', 'endTurn',
+    ['roll', 'payJailFine', 'useJailCard', 'buy', 'declineToAuction', 'bid', 'pass', 'endTurn',
      'mortgage', 'unmortgage', 'build', 'sellBuilding', 'declareBankruptcy', 'proposeTrade', 'respondTrade'].forEach((name) => {
       const action = game[name];
       game[name] = function () {

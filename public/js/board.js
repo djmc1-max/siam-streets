@@ -20,20 +20,6 @@
     return '';
   }
 
-  // Which artwork / tone each non-property square gets.
-  const CORNER_ART = { 1: ['art-start', 'start'], 11: ['art-prison', 'prison'], 21: ['art-songkran', 'songkran'], 31: ['art-police', 'police'] };
-  function iconFor(sq) {
-    if (sq.type === 'airport') return 'icon-plane';
-    if (sq.type === 'utility') return 'icon-lotus';
-    if (sq.type === 'tax') return sq.id === 5 ? 'icon-coin' : 'icon-gem';
-    if (sq.type === 'card') return sq.name === 'Surprise' ? 'icon-star' : 'icon-chest';
-    return null;
-  }
-  function toneFor(sq) {
-    if (sq.type === 'card') return sq.name === 'Surprise' ? 'surprise' : 'treasure';
-    return sq.type; // airport | utility | tax
-  }
-
   function buildSquare(sq) {
     const pos = placement(sq.id);
     const el = document.createElement('div');
@@ -47,57 +33,39 @@
     el.setAttribute('tabindex', '0');
     el.setAttribute('aria-label', sq.name + (sq.price ? ', ' + baht(sq.price) : ''));
 
-    const face = document.createElement('div');
-    face.className = 'face';
-    let tone;
-    if (isCorner(sq)) {
-      const [art, t] = CORNER_ART[sq.id];
-      tone = t;
-      face.appendChild(window.SiamArt.use(art, 'corner-art'));
-    } else if (sq.group) {
-      tone = null;
-      const strip = document.createElement('div');   // the colour-group strip across the top of the dark square
+    if (sq.group) {
+      const strip = document.createElement('div');
       strip.className = 'strip';
-      face.appendChild(strip);
-    } else {
-      tone = toneFor(sq);
+      el.appendChild(strip);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    if (sq.icon) {
       const icon = document.createElement('div');
       icon.className = 'icon';
-      icon.appendChild(window.SiamArt.use(iconFor(sq), 'sq-icon'));
-      face.appendChild(icon);
+      if (window.SiamIcons.isToken(sq.icon)) icon.appendChild(window.SiamIcons.fromToken(sq.icon));
+      else icon.textContent = sq.icon;
+      body.appendChild(icon);
     }
-    if (tone) el.dataset.tone = tone;
-
-    const label = document.createElement('div');
-    label.className = 'label';
     const name = document.createElement('div');
     name.className = 'name';
-    // one long single word (Suvarnabhumi) may break in the middle when the square is narrow
-    const parts = sq.name === 'Suvarnabhumi' ? ['Suvarna', 'bhumi'] : [sq.name];
-    parts.forEach((part, i) => { if (i) name.appendChild(document.createElement('wbr')); name.appendChild(document.createTextNode(part)); });
-    label.appendChild(name);
+    name.textContent = sq.name;
+    body.appendChild(name);
+
     const price = priceLabel(sq);
     if (price) {
       const p = document.createElement('div');
       p.className = 'price';
       p.textContent = price;
-      label.appendChild(p);
+      body.appendChild(p);
     } else if (sq.sub) {
       const s = document.createElement('div');
       s.className = 'sub';
       s.textContent = sq.sub;
-      label.appendChild(s);
+      body.appendChild(s);
     }
-    face.appendChild(label);
-
-    if (sq.group) {
-      const bldg = document.createElement('div');
-      bldg.className = 'bldg';
-      // side squares are short: their houses sit on the colour strip; top/bottom squares have a zone at the foot
-      if (pos.side === 'left' || pos.side === 'right') face.querySelector('.strip').appendChild(bldg);
-      else face.appendChild(bldg);
-    }
-    el.appendChild(face);
+    el.appendChild(body);
     return el;
   }
 
@@ -111,34 +79,68 @@
     return parts.join(' · ');
   }
 
+  function wireDetail(boardEl) {
+    const detail = document.getElementById('square-detail');
+    let timer;
+    function show(sq) {
+      detail.replaceChildren();
+      const strong = document.createElement('strong');
+      strong.textContent = sq.id + '. ' + sq.name;
+      const span = document.createElement('span');
+      span.textContent = detailText(sq);
+      detail.append(strong, span);
+      detail.style.setProperty('--detail-color', sq.group ? COLOR_GROUPS[sq.group].color : 'var(--line)');
+      detail.hidden = false;
+      clearTimeout(timer);
+      timer = setTimeout(() => { detail.hidden = true; }, 3500);
+    }
+    boardEl.addEventListener('click', (e) => {
+      const sqEl = e.target.closest('.square');
+      if (sqEl) show(BOARD[Number(sqEl.dataset.id) - 1]);
+    });
+    boardEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const sqEl = e.target.closest('.square');
+      if (sqEl) { e.preventDefault(); show(BOARD[Number(sqEl.dataset.id) - 1]); }
+    });
+  }
+
+  function renderLegend() {
+    const legend = document.getElementById('legend');
+    legend.replaceChildren();
+    Object.values(COLOR_GROUPS).forEach((g) => {
+      const li = document.createElement('li');
+      const sw = document.createElement('span');
+      sw.className = 'swatch';
+      sw.style.background = g.color;
+      li.append(sw, document.createTextNode(g.name));
+      legend.appendChild(li);
+    });
+  }
+
   function renderBoard() {
     const boardEl = document.getElementById('board');
     if (boardEl.querySelector('.square')) return;
     BOARD.forEach((sq) => boardEl.appendChild(buildSquare(sq)));
+    renderLegend();
+    wireDetail(boardEl);
   }
 
-  // Shrink each square's label just enough that the name and price sit fully inside it. Names only wrap
-  // at spaces (never mid-word); a word that is too long shows up as overflow, which is fixed by a
-  // smaller font. Works for horizontal and rotated (vertical) labels because it checks both axes.
-  const MIN_PX = 7;
-  const overflows = (label) => {
-    const kids = label.children;
-    for (let i = 0; i < kids.length; i++) {
-      const k = kids[i];
-      if (k.scrollWidth > k.clientWidth + 0.6 || k.scrollHeight > k.clientHeight + 0.6) return true;
-    }
-    return label.scrollWidth > label.clientWidth + 0.6 || label.scrollHeight > label.clientHeight + 0.6;
-  };
+  // Shrink a square's name just enough that no word is split or clipped.
+  // Names are only ever wrapped at spaces (never mid-word), so a word wider than the
+  // square shows up as horizontal overflow, which we fit by reducing the font size.
+  const MIN_NAME_PX = 6;
   function fitNames() {
-    document.querySelectorAll('#board .square .label').forEach((label) => {
-      label.style.fontSize = '';
-      label.classList.remove('clip');
-      let size = parseFloat(getComputedStyle(label).fontSize);
-      while (overflows(label) && size > MIN_PX) {
-        size -= 0.25;
-        label.style.fontSize = size + 'px';
+    document.querySelectorAll('#board .square .name').forEach((el) => {
+      el.classList.remove('clip');
+      el.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth + 0.5 && size > MIN_NAME_PX) {
+        size -= 0.5;
+        el.style.fontSize = size + 'px';
       }
-      if (overflows(label)) label.classList.add('clip'); // last resort on tiny screens; tapping a square shows the full text
+      // Still too wide at the floor (tiny phones): fall back to an ellipsis; tap shows the full name.
+      if (el.scrollWidth > el.clientWidth + 0.5) el.classList.add('clip');
     });
   }
 

@@ -95,49 +95,5 @@
     window.addEventListener('keydown', onFirstGesture);
   }
 
-  // ---- game-show sounds (Phase 3.5): crowd applause + camera shutter clicks, all synthesised ----
-  const log = [];            // { type, t } — lets tests confirm the sounds were triggered
-  let noiseBuf = null;
-  function noise() {
-    if (noiseBuf) return noiseBuf;
-    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    return noiseBuf;
-  }
-  function burst(at, dur, freq, q, peak) {
-    const src = ctx.createBufferSource();
-    src.buffer = noise();
-    src.playbackRate.value = 0.8 + Math.random() * 0.5;
-    const f = ctx.createBiquadFilter();
-    f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
-    const g = ctx.createGain();
-    const t0 = ctx.currentTime + at;
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    src.connect(f); f.connect(g); g.connect(master);
-    src.start(t0, Math.random() * 0.5, dur + 0.02);
-  }
-  // A crowd: hundreds of tiny claps whose density swells and then fades.
-  function applause(seconds) {
-    log.push({ type: 'applause', t: Date.now(), seconds });
-    if (muted || !ensureContext()) return;
-    const clapCount = Math.round(seconds * 70);
-    for (let i = 0; i < clapCount; i++) {
-      const x = Math.random();
-      const at = x * seconds;
-      const env = Math.sin(Math.PI * Math.min(1, at / seconds)) ** 0.8;   // swell then fade
-      if (Math.random() < env) burst(at, 0.03 + Math.random() * 0.05, 1400 + Math.random() * 2600, 1.2, 0.12 * env);
-    }
-    burst(0, seconds, 900, 0.5, 0.03);                                      // low roar bed
-  }
-  function shutter() {
-    log.push({ type: 'shutter', t: Date.now() });
-    if (muted || !ensureContext()) return;
-    burst(0, 0.03, 4200, 3, 0.35);
-    burst(0.07, 0.05, 2400, 2, 0.28);
-  }
-
-  window.SiamAudio = { init, applause, shutter, log, isMuted: () => muted };
+  window.SiamAudio = { init };
 })();

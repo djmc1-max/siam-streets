@@ -19,17 +19,9 @@
   }
 
   const emptySide = () => ({ props: [], cash: 0, cards: [] });
-  const iconOf = (id) => window.SiamData.TOKENS.find((t) => t.id === engine().state.players[id].tokenId).icon;
-  const colourOf = (id) => window.SiamPalette.playerColor(id);
-  function avatar(id, cls) {
-    const a = el('span', 'trd-avatar ' + (cls || ''), iconOf(id));
-    a.style.setProperty('--ring', colourOf(id));
-    return a;
-  }
 
   // plain-text description of one side of an offer
   function describe(side) {
-    side = side || emptySide();
     const parts = side.props.map((id) => BOARD[id - 1].name);
     if (side.cash) parts.push(fmtBaht(side.cash));
     if (side.cards.length) parts.push(side.cards.length + ' Get Out of Jail Free card' + (side.cards.length > 1 ? 's' : ''));
@@ -68,43 +60,32 @@
     return wrap;
   }
 
-  function stepper(label, value, min, max, step, onSet) {
-    const row = el('div', 'trd-step');
-    row.append(el('span', 'trd-step-label', label));
-    const ctl = el('div', 'trd-step-ctl');
-    const minus = el('button', 'trd-step-btn', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Less');
-    const plus = el('button', 'trd-step-btn', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'More');
-    const input = el('input');
-    input.type = 'number'; input.inputMode = 'numeric'; input.min = min; input.max = max; input.step = step;
-    input.placeholder = '0';
-    input.value = value ? value : '';
-    const set = (v, keepFocus) => { onSet(Math.max(min, Math.min(Number.MAX_SAFE_INTEGER, Math.floor(v || 0))), keepFocus); };
-    input.addEventListener('input', () => set(Number(input.value), true));
-    minus.addEventListener('click', () => set((Number(input.value) || 0) - step));
-    plus.addEventListener('click', () => set((Number(input.value) || 0) + step));
-    ctl.append(minus, input, plus);
-    row.append(ctl);
-    return { row, input };
-  }
-
-  function sideEditor(title, kind, ownerId, side, onChange) {
+  function sideEditor(title, ownerId, side, onChange) {
     const state = engine().state;
     const owner = state.players[ownerId];
-    const box = el('section', 'trd-side trd-' + kind);
-    const h = el('h3', 'trd-side-title');
-    h.append(avatar(ownerId, 'small'), el('span', null, title));
-    box.append(h);
+    const box = el('section', 'trd-side');
+    box.append(el('h3', null, title));
     box.append(propertyChips(ownerId, side, onChange));
 
-    const cash = stepper(ownerId === me() ? 'Cash (you have ' + fmtBaht(owner.cash) + ')' : 'Cash (' + owner.name + ' has ' + fmtBaht(owner.cash) + ')',
-      side.cash, 0, owner.cash, 100, (v, keep) => { side.cash = v; onChange(keep); });
-    box.append(cash.row);
+    const cashRow = el('label', 'trd-cash');
+    cashRow.append(el('span', null, ownerId === me() ? 'Cash (you have ' + fmtBaht(owner.cash) + ')' : 'Cash (' + owner.name + ' has ' + fmtBaht(owner.cash) + ')'));
+    const input = el('input');
+    input.type = 'number'; input.inputMode = 'numeric'; input.min = 0; input.max = owner.cash; input.step = 50;
+    input.placeholder = '฿0';
+    input.value = side.cash ? side.cash : '';
+    input.addEventListener('input', () => { side.cash = Math.max(0, Math.floor(Number(input.value) || 0)); onChange(true); });
+    cashRow.append(input);
+    box.append(cashRow);
 
     if (owner.jailCards.length) {
-      const cards = stepper('🆓 Get Out of Jail Free cards', side.cards.length, 0, owner.jailCards.length, 1,
-        (v) => { side.cards = owner.jailCards.slice(0, Math.min(v, owner.jailCards.length)); onChange(); });
-      cards.input.max = owner.jailCards.length;
-      box.append(cards.row);
+      const cardsRow = el('label', 'trd-cash');
+      cardsRow.append(el('span', null, '🆓 Get Out of Jail Free cards'));
+      const sel = el('select');
+      for (let n = 0; n <= owner.jailCards.length; n++) { const o = el('option', null, String(n)); o.value = n; sel.append(o); }
+      sel.value = side.cards.length;
+      sel.addEventListener('change', () => { side.cards = owner.jailCards.slice(0, Number(sel.value)); onChange(); });
+      cardsRow.append(sel);
+      box.append(cardsRow);
     }
     return box;
   }
@@ -119,28 +100,25 @@
     $('trade-close').hidden = counter;      // a counter-offer is answered, not abandoned (Back returns to the offer)
 
     if (!counter) {
-      body.append(el('h3', 'trd-pick-title', 'Who do you want to trade with?'));
-      const tiles = el('div', 'trd-tiles');
+      const pick = el('label', 'trd-partner');
+      pick.append(el('span', null, 'Trade with'));
+      const sel = el('select', null);
       state.players.forEach((p) => {
         if (p.id === me() || p.bankrupt) return;
-        const t = el('button', 'trd-tile');
-        t.type = 'button'; t.dataset.player = p.id;
-        t.setAttribute('aria-pressed', String(draft.partner === p.id));
-        const info = el('span', 'trd-tile-info');
-        info.append(el('span', 'trd-tile-name', p.name), el('span', 'trd-tile-cash', fmtBaht(p.cash)));
-        t.append(avatar(p.id), info);
-        t.addEventListener('click', () => { draft.partner = p.id; draft.get = emptySide(); render(); });
-        tiles.append(t);
+        const o = el('option', null, p.name); o.value = p.id; sel.append(o);
       });
-      body.append(tiles);
+      sel.value = draft.partner;
+      sel.addEventListener('change', () => { draft.partner = Number(sel.value); draft.get = emptySide(); render(); });
+      pick.append(sel);
+      body.append(pick);
     } else {
       body.append(el('p', 'trd-note', name(draft.partner) + ' offered: they give ' + describe(draft.counterOf.give) + ', and want ' + describe(draft.counterOf.get) + '. Change the terms below.'));
     }
 
     const cols = el('div', 'trd-cols');
     const refresh = (keepFocus) => { if (keepFocus) updateStatus(); else render(); };
-    cols.append(sideEditor('You offer', 'offer', me(), draft.give, refresh));
-    cols.append(sideEditor('You ask for', 'ask', draft.partner, draft.get, refresh));
+    cols.append(sideEditor('You give', me(), draft.give, refresh));
+    cols.append(sideEditor('You get from ' + name(draft.partner), draft.partner, draft.get, refresh));
     body.append(cols);
 
     const status = el('div', 'trd-status');
@@ -185,9 +163,9 @@
     $('trade-close').hidden = true;
 
     const cols = el('div', 'trd-cols');
-    [['They are offering', t.give, 'offer'], ['They are asking for', t.get, 'ask']].forEach(([title, side, kind]) => {
-      const box = el('section', 'trd-side trd-' + kind);
-      const h = el('h3', 'trd-side-title'); h.append(avatar(kind === 'offer' ? t.from : t.to, 'small'), el('span', null, title)); box.append(h);
+    [['They give you', t.give], ['They want from you', t.get]].forEach(([title, side]) => {
+      const box = el('section', 'trd-side');
+      box.append(el('h3', null, title));
       const list = el('div', 'trd-summary');
       side.props.forEach((id) => {
         const sq = BOARD[id - 1];
@@ -209,16 +187,16 @@
     body.append(status);
 
     const answer = (reply) => { const done = pendingReply; pendingReply = null; close(); done({ type: 'tradeReply', reply }); };
-    const decline = el('button', 'btn btn-secondary trd-big', 'Decline'); decline.type = 'button'; decline.id = 'trade-decline';
+    const decline = el('button', 'btn btn-secondary', 'Decline'); decline.type = 'button'; decline.id = 'trade-decline';
     decline.addEventListener('click', () => answer('decline'));
-    const negotiate = el('button', 'btn btn-secondary trd-big trd-neg', 'Negotiate'); negotiate.type = 'button'; negotiate.id = 'trade-negotiate';
+    const negotiate = el('button', 'btn btn-secondary', 'Negotiate'); negotiate.type = 'button'; negotiate.id = 'trade-negotiate';
     negotiate.addEventListener('click', () => {
       // start from the reverse of their offer: I give what they asked for, I get what they offered
       draft = { partner: t.from, give: JSON.parse(JSON.stringify(t.get)), get: JSON.parse(JSON.stringify(t.give)), counterOf: t, trade: t };
       mode = 'compose';
       render();
     });
-    const accept = el('button', 'btn btn-primary trd-big trd-acc', 'Accept'); accept.type = 'button'; accept.id = 'trade-accept';
+    const accept = el('button', 'btn btn-primary', 'Accept'); accept.type = 'button'; accept.id = 'trade-accept';
     accept.disabled = !check.ok;
     accept.addEventListener('click', () => answer('accept'));
     foot.append(decline, negotiate, accept);
@@ -226,7 +204,7 @@
 
   function render() { if (mode === 'compose') renderCompose(); else renderReview(); }
 
-  function show() { $('trade').hidden = false; if (window.SiamPopup) window.SiamPopup.hide(); unwatch(); }
+  function show() { $('trade').hidden = false; }
   function close() { $('trade').hidden = true; mode = null; }
 
   // Composer, opened from the Trade button.
@@ -247,37 +225,6 @@
     return new Promise((resolve) => { pendingReply = resolve; });
   }
 
-  // ---------- everyone sees a trade in progress ----------
-  // A banner under the top bar names both sides and what is on the table. Players who are not part of the
-  // trade see it too (with the live feed entries); the ones who are see it while they wait for the answer.
-  let watchTimer = 0;
-  function unwatch() { clearTimeout(watchTimer); const b = $('trade-watch'); if (b) b.hidden = true; }
-  function watch(ev, kind) {
-    const b = $('trade-watch');
-    if (!b) return;
-    clearTimeout(watchTimer);
-    const st = engine().state;
-    const from = st.players[ev.from], to = st.players[ev.to];
-    const iAm = (id) => id === me();
-    const who = (p) => (iAm(p.id) ? 'You' : p.name);
-    const text = {
-      offer: who(from) + (iAm(from.id) ? ' offer ' : ' offers ') + (iAm(to.id) ? 'you' : to.name) + ' ' + describe(ev.give) + ' for ' + describe(ev.get),
-      counter: who(from) + (iAm(from.id) ? ' counter-offer ' : ' counter-offers ') + (iAm(to.id) ? 'you' : to.name) + ': ' + describe(ev.give) + ' for ' + describe(ev.get),
-      declined: (iAm(to.id) ? 'You declined' : to.name + ' declined') + (iAm(from.id) ? ' your offer' : ' ' + (from.name) + "'s offer"),
-      completed: 'Trade done: ' + from.name + ' and ' + to.name + ' swapped ' + describe(ev.give) + ' for ' + describe(ev.get)
-    }[kind];
-    b.replaceChildren();
-    const av = el('span', 'tw-avatars');
-    av.append(avatar(ev.from, 'small'), el('span', 'tw-arrows', '⇄'), avatar(ev.to, 'small'));
-    const t = el('span', 'tw-text', text);
-    const tag = el('span', 'tw-tag ' + kind, { offer: 'Trade in progress', counter: 'Trade in progress', declined: 'Declined', completed: 'Completed' }[kind]);
-    b.append(av, el('span', 'tw-body', ''));
-    b.lastChild.append(tag, t);
-    b.dataset.kind = kind;
-    b.hidden = false;
-    if (kind === 'declined' || kind === 'completed') watchTimer = setTimeout(unwatch, 3500);
-  }
-
   function init() {
     $('btn-trade').addEventListener('click', open);
     $('trade-close').addEventListener('click', close);
@@ -291,5 +238,5 @@
     });
   }
 
-  window.SiamTrade = { init, open, respond, describe, watch, unwatch };
+  window.SiamTrade = { init, open, respond, describe };
 })();

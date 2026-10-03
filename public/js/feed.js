@@ -16,11 +16,9 @@
     list.appendChild(li);
     while (list.children.length > MAX_ENTRIES) list.removeChild(list.firstChild);
     list.scrollTop = list.scrollHeight;
-    const latest = document.getElementById('feed-latest');
-    if (latest) latest.textContent = text;
   }
 
-  function clear() { el().replaceChildren(); const latest = document.getElementById('feed-latest'); if (latest) latest.textContent = ''; }
+  function clear() { el().replaceChildren(); }
 
   window.SiamFeed = { add, clear };
 })();

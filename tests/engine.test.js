@@ -152,7 +152,7 @@ test('three doubles in a row sends the player straight to prison without moving'
   // resolve whatever the first two landings asked for
   const settle = () => {
     while (g.state.phase === 'action') g.declineToAuction();
-    if (g.state.phase === 'auction') g.closeAuction();
+    while (g.state.phase === 'auction') g.pass(g.state.auction.turn);
   };
   settle();
   if (g.state.phase === 'roll') g.roll();
@@ -195,7 +195,7 @@ test('jail: doubles free you and you move, but get no extra turn', () => {
   assert.equal(ev.find((e) => e.type === 'jailFreed').reason, 'doubles');
   assert.equal(g.state.players[0].pos, 15);
   g.state.pending && g.declineToAuction();
-  if (g.state.phase === 'auction') g.closeAuction();
+  while (g.state.phase === 'auction') g.pass(g.state.auction.turn);
   assert.equal(g.state.phase, 'end');
 });
 
@@ -253,18 +253,16 @@ function offerGame(n = 3, cash) {
   return g;
 }
 
-test('auction: everyone but the decliner can bid at any time; highest bidder pays and owns the property', () => {
+test('auction: everyone but the decliner bids; highest bidder pays and owns the property', () => {
   const g = offerGame(3); const ev0 = g.roll(); assert.ok(types(ev0).includes('offer'));
   const ev = g.declineToAuction();
   assert.deepEqual(ev.find((e) => e.type === 'auctionStart').bidders, [1, 2]);
-  assert.throws(() => g.bid(0, 100), /not allowed|cannot bid|decline/i);   // the decliner watches
-  g.bid(1, 100);
-  g.bid(1, 150);                                                          // no turn order: the same bidder may raise again
-  assert.throws(() => g.bid(2, 150), /higher/);
+  assert.equal(g.availableActions().actor, 1);
+  assert.throws(() => g.bid(0, 100), /turn/);
+  g.bid(1, 100); assert.equal(g.availableActions().actor, 2);
+  assert.throws(() => g.bid(2, 100), /higher/);
   g.bid(2, 200);
-  assert.equal(g.state.auction.highBidder, 2);
-  assert.equal(g.state.phase, 'auction');                                 // bids alone never end it
-  const res = g.closeAuction();
+  const res = g.pass(1);
   const won = res.find((e) => e.type === 'auctionWon');
   assert.equal(won.playerId, 2); assert.equal(won.amount, 200);
   assert.equal(g.state.owners[2], 2);
@@ -276,21 +274,10 @@ test('auction: everyone but the decliner can bid at any time; highest bidder pay
 test('auction: minimum bid is 1; no bids leaves the property with the bank', () => {
   const g = offerGame(3); g.roll(); g.declineToAuction();
   assert.throws(() => g.bid(1, 0));
-  assert.throws(() => g.bid(1, 1.5));
-  assert.throws(() => g.bid(1, 99999), /exceeds/);
-  const res = g.closeAuction();
+  g.pass(1); const res = g.pass(2);
   assert.ok(types(res).includes('auctionNoSale'));
   assert.equal(g.state.owners[2], undefined);
   assert.equal(g.state.phase, 'end');
-});
-
-test('auction: a bot cannot outbid with money it does not have, and closing outside an auction is refused', () => {
-  const g = offerGame(3); assert.throws(() => g.closeAuction());
-  g.roll(); g.declineToAuction();
-  g.state.players[2].cash = 300;
-  assert.throws(() => g.bid(2, 301), /exceeds/);
-  g.bid(2, 300);
-  assert.equal(g.availableActions().canBid, true);
 });
 
 test('auction: starts automatically when the landing player cannot afford the property', () => {
@@ -299,7 +286,7 @@ test('auction: starts automatically when the landing player cannot afford the pr
   assert.deepEqual(types(ev).slice(-3), ['land', 'cantAfford', 'auctionStart']);
   assert.equal(g.state.phase, 'auction');
   assert.ok(!g.availableActions().canBuy);
-  g.bid(1, 1); g.closeAuction(); // the sole bidder wins for the minimum bid (Section 18 as written)
+  g.bid(1, 1); // the sole bidder wins for the minimum bid (Section 18 as written)
   assert.equal(g.state.owners[7], 1);
   assert.equal(g.state.players[1].cash, 14999);
 });
