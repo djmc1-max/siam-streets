@@ -18,6 +18,33 @@
   <linearGradient id="a-gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8ffff"/><stop offset=".5" stop-color="#5de0ff"/><stop offset="1" stop-color="#1d7fd8"/></linearGradient>
   <linearGradient id="a-star" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7c0"/><stop offset="1" stop-color="#ffb52e"/></linearGradient>
 
+
+  <!-- ===== logo emblem: purple glass ellipse, double gold ring, engraved gold lettering ===== -->
+  <radialGradient id="l-purple" cx=".5" cy=".3" r=".85"><stop offset="0" stop-color="#8a4af0"/><stop offset=".5" stop-color="#4a1aa8"/><stop offset="1" stop-color="#16053f"/></radialGradient>
+  <linearGradient id="l-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".3" stop-color="#f5c542"/><stop offset=".6" stop-color="#b9770c"/><stop offset=".8" stop-color="#ffe08a"/><stop offset="1" stop-color="#c58a14"/></linearGradient>
+  <linearGradient id="l-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff8d6"/><stop offset=".38" stop-color="#f8d160"/><stop offset=".72" stop-color="#e39a1f"/><stop offset="1" stop-color="#a8620c"/></linearGradient>
+  <linearGradient id="l-shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <radialGradient id="l-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#b784ff" stop-opacity=".65"/><stop offset="1" stop-color="#b784ff" stop-opacity="0"/></radialGradient>
+  <filter id="l-shadow" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="2.200" flood-color="#1a0840" flood-opacity=".9"/></filter>
+  <symbol id="logo-emblem" viewBox="0 0 600 330">
+    <ellipse cx="300" cy="165" rx="300" ry="165" fill="url(#l-glow)"/>
+    <ellipse cx="300" cy="165" rx="284" ry="148" fill="url(#l-purple)" stroke="url(#l-ring)" stroke-width="8"/>
+    <ellipse cx="300" cy="165" rx="266" ry="130" fill="none" stroke="url(#l-ring)" stroke-width="2.600"/>
+    <path d="M44 150C60 60 170 36 300 36s240 24 256 114C500 104 400 84 300 84S100 104 44 150Z" fill="url(#l-shine)"/>
+    <g filter="url(#l-shadow)" font-family="'Cinzel Decorative', Georgia, 'Times New Roman', serif" font-weight="900" text-anchor="middle" letter-spacing="5">
+      <text x="300" y="150" font-size="92" textLength="318" lengthAdjust="spacingAndGlyphs" fill="url(#l-gold)" stroke="#4a2600" stroke-width="2.200" paint-order="stroke">SIAM</text>
+      <text x="300" y="240" font-size="66" textLength="400" lengthAdjust="spacingAndGlyphs" fill="url(#l-gold)" stroke="#4a2600" stroke-width="2" paint-order="stroke">STREETS</text>
+    </g>
+    <use href="#logo-orn" x="222" y="153" width="156" height="20"/>
+    <g fill="#fff6c8">
+      <path id="l-spark" d="M62 62l5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/>
+      <use href="#l-spark" transform="translate(440 -22) scale(.8)"/>
+      <use href="#l-spark" transform="translate(-14 170) scale(.7)"/>
+      <use href="#l-spark" transform="translate(454 150) scale(.9)"/>
+      <use href="#l-spark" transform="translate(250 -30) scale(.5)"/>
+    </g>
+  </symbol>
+
   <!-- ===== corners (square art, drawn to fill the whole corner) ===== -->
   <symbol id="art-start" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
     <rect width="100" height="100" fill="url(#a-start-bg)"/>

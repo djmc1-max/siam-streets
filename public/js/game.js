@@ -50,7 +50,7 @@
     Feed.add('🎮', 'Game on! ' + seats.length + ' players, ' + fmtBaht(settings.startingCash) + ' each');
     Feed.add('🎯', nameOf(0) + "'s turn");
 
-    run(myRun).catch((err) => { console.error(err); Feed.add('⚠️', 'Something went wrong: ' + err.message); });
+    window.SiamShow.play().then(() => { if (SiamGame.runId === myRun) return run(myRun); }).catch((err) => { console.error(err); Feed.add('⚠️', 'Something went wrong: ' + err.message); });
   }
 
   async function run(myRun) {
@@ -255,15 +255,19 @@
         Feed.add('💵', n + ' sold a ' + (ev.hotel ? 'hotel' : 'house') + ' on ' + sqName(ev.square) + ' for ' + fmtBaht(ev.refund));
         break;
       case 'tradeProposed':
+        window.SiamTrade.watch(ev, 'offer');
         Feed.add('🤝', nameOf(ev.from) + ' offers ' + nameOf(ev.to) + ' a trade: gives ' + window.SiamTrade.describe(ev.give) + ' for ' + window.SiamTrade.describe(ev.get));
         break;
       case 'tradeCountered':
+        window.SiamTrade.watch(ev, 'counter');
         Feed.add('🤝', nameOf(ev.from) + ' counter-offers ' + nameOf(ev.to) + ': gives ' + window.SiamTrade.describe(ev.give) + ' for ' + window.SiamTrade.describe(ev.get));
         break;
       case 'tradeDeclined':
+        window.SiamTrade.watch(ev, 'declined');
         Feed.add('🤝', nameOf(ev.to) + ' declined ' + nameOf(ev.from) + "'s offer");
         break;
       case 'tradeCompleted':
+        window.SiamTrade.watch(ev, 'completed');
         ev.give.props.forEach((sq) => UI.setOwner(sq, ev.to));
         ev.get.props.forEach((sq) => UI.setOwner(sq, ev.from));
         ev.jailCards.forEach((count, id) => UI.setJailCards(id, count));

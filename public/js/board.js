@@ -106,37 +106,10 @@
     return parts.join(' · ');
   }
 
-  function wireDetail(boardEl) {
-    const detail = document.getElementById('square-detail');
-    let timer;
-    function show(sq) {
-      detail.replaceChildren();
-      const strong = document.createElement('strong');
-      strong.textContent = sq.id + '. ' + sq.name;
-      const span = document.createElement('span');
-      span.textContent = detailText(sq);
-      detail.append(strong, span);
-      detail.style.setProperty('--detail-color', sq.group ? COLOR_GROUPS[sq.group].color : 'var(--line)');
-      detail.hidden = false;
-      clearTimeout(timer);
-      timer = setTimeout(() => { detail.hidden = true; }, 3500);
-    }
-    boardEl.addEventListener('click', (e) => {
-      const sqEl = e.target.closest('.square');
-      if (sqEl) show(BOARD[Number(sqEl.dataset.id) - 1]);
-    });
-    boardEl.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      const sqEl = e.target.closest('.square');
-      if (sqEl) { e.preventDefault(); show(BOARD[Number(sqEl.dataset.id) - 1]); }
-    });
-  }
-
   function renderBoard() {
     const boardEl = document.getElementById('board');
     if (boardEl.querySelector('.square')) return;
     BOARD.forEach((sq) => boardEl.appendChild(buildSquare(sq)));
-    wireDetail(boardEl);
   }
 
   // Shrink each square's label just enough that the name and price sit fully inside it. Names only wrap

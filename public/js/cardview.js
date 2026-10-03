@@ -11,6 +11,7 @@
   // Resolves once the card has been dismissed (tap / OK / Enter) or, for bots, after a short pause.
   function show({ deck, text, playerName, waitForTap }) {
     const overlay = $('card-overlay');
+    if (window.SiamPopup) window.SiamPopup.hide();
     const face = $('card-face');
     const meta = DECKS[deck];
     face.className = 'card-face card-' + deck;

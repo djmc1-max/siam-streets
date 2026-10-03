@@ -147,11 +147,10 @@ body {
   .dock .auction-controls #bid-pass { order: 5; }
   .dock .auction-controls .btn { min-height: 50px; padding: 4px 8px; font-size: 17px; border-radius: 12px; }
 
-  .square-detail { bottom: calc(var(--dock-h, 0px) + 12px); z-index: 45; }
 
   /* with the feed out of the board centre, the logo and dice get the room */
   .board-center { justify-content: center; gap: calc(var(--u) * 4); padding: calc(var(--u) * 1.5); }
-  .board-center .logo--compact { font-size: calc(var(--u) * 6.5); }
+  .board-center .logo--compact { width: calc(var(--u) * 50); }
   .board-center .die3d { --s: calc(var(--u) * 11); }
   .board-center .dice { gap: calc(var(--u) * 7); }
 
@@ -161,3 +160,62 @@ body {
 @media (max-height: 500px) and (orientation: landscape) and (min-width: 601px) {
   .board { --bw: calc(100dvh - 60px); }
 }
+
+/* ---------- game-show start ---------- */
+.show { position: fixed; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; }
+.cam-flash {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 244, 205, .45) 22%, rgba(255, 244, 205, 0) 62%),
+    conic-gradient(from 0deg, rgba(255,255,255,.55), transparent 12%, rgba(255,255,255,.55) 25%, transparent 37%, rgba(255,255,255,.55) 50%, transparent 62%, rgba(255,255,255,.55) 75%, transparent 87%);
+  -webkit-mask-image: radial-gradient(circle, #000 0, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 0, #000 40%, transparent 72%);
+  opacity: 0;
+  animation: cam-flash .42s ease-out forwards;
+}
+@keyframes cam-flash { 0% { opacity: 0; transform: scale(.4) rotate(0); } 18% { opacity: .9; } 100% { opacity: 0; transform: scale(1.15) rotate(25deg); } }
+#game.reveal .game-main { animation: reveal 1.7s ease-out both; }
+#game.reveal::before { content: ''; position: fixed; inset: 0; z-index: 70; pointer-events: none; background: radial-gradient(circle at 50% 45%, transparent 0, rgba(5, 2, 18, .88) 70%); animation: spot-out 2s ease-out forwards; }
+@keyframes reveal { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes spot-out { 0% { opacity: 1; } 60% { opacity: .5; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #game.reveal .game-main { animation: reveal-calm 1.2s ease-out both; }
+  #game.reveal::before { background: radial-gradient(circle at 50% 45%, rgba(245, 197, 66, .18), transparent 70%); animation: spot-out 1.4s ease-out forwards; }
+  @keyframes reveal-calm { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* ---------- square popup ---------- */
+.sq-popup { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(6, 2, 20, .5); }
+.sqp-card { width: min(100%, 400px); max-height: min(90dvh, 700px); overflow-y: auto; background: var(--bg-elev); border: 2px solid rgba(245, 197, 66, .6); border-radius: 18px; box-shadow: 0 18px 60px rgba(0, 0, 0, .7); animation: sqp-in .18s ease-out; }
+@keyframes sqp-in { from { transform: translateY(12px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.sqp-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 14px 18px; color: #fff; background: linear-gradient(165deg, var(--a, #3a3f66), var(--b, #1a1d36)); text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.sqp-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sqp-name { font-size: 20px; }
+.sqp-kind { font-size: 13px; opacity: .9; }
+.sqp-close { flex: none; text-shadow: none; }
+.sqp-body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.sqp-price { font-size: 22px; font-weight: 800; color: var(--accent); }
+.sqp-sub { color: var(--text-dim); font-size: 14px; }
+.sqp-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 700; }
+.sqp-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+.sqp-tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; border: 1px solid; }
+.sqp-tag.good { color: #4ade80; } .sqp-tag.bad { color: #f87171; }
+.sqp-rents { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.sqp-rent { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 14px; }
+.sqp-rent:nth-child(odd) { background: rgba(255, 255, 255, .04); }
+.sqp-rent.now { background: rgba(245, 197, 66, .22); font-weight: 800; color: #fff; }
+.sqp-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.sqp-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 60px; padding: 8px 10px; font-size: 17px; border-radius: 14px; color: #fff; border: 0; }
+.sqp-btn-amt { font-size: 14px; font-weight: 800; opacity: .95; }
+.sqp-build { background: linear-gradient(180deg, #1fae5a, #0d7a3a); }
+.sqp-sell { background: linear-gradient(180deg, #d9822b, #a14e0a); }
+.sqp-mortgage { background: linear-gradient(180deg, #6d4bd8, #43249a); }
+.sqp-unmortgage { background: linear-gradient(180deg, #2a86d8, #165aa0); }
+.sqp-btn:disabled { filter: grayscale(.8) brightness(.6); opacity: .8; }
+.sqp-why { color: #fbbf24; font-size: 13px; min-height: 1em; }
+@media (max-width: 600px) {
+  .sq-popup { padding: 0; place-items: end center; }
+  .sqp-card { width: 100%; border-radius: 20px 20px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+@media (prefers-reduced-motion: reduce) { .sqp-card { animation: none; } }
