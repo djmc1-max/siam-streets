@@ -133,11 +133,20 @@ body { overflow-x: hidden; }
 .logo--compact .logo-orn { flex-basis: 100%; width: 4.4em; margin: .1em auto 0; }
 
 .slogan {
-  margin: 12px 0 20px;
+  margin: 8px 0 22px;
   text-align: center;
-  color: var(--text-dim);
-  font-style: italic;
-  font-size: clamp(15px, 4vw, 18px);
+  font-family: "Cinzel Decorative", Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(24px, 6.6vw, 28px);
+  line-height: 1.2;
+  letter-spacing: .02em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, #fff3b0 0%, #f9d04a 45%, #e0a124 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #f5b642;
+  filter: drop-shadow(0 2px 0 rgba(60, 30, 0, .8)) drop-shadow(0 0 12px rgba(245, 182, 66, .35));
 }
 
 .field-label {
