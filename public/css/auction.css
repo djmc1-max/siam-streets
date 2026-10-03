@@ -63,7 +63,7 @@
 .as-player.watching .as-player-tag { color: #cdbdf5; }
 
 .as-controls { width: min(100%, 880px); display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-.as-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.as-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .as-raise { min-height: 64px; font-size: 22px; font-weight: 900; color: #fff; background: linear-gradient(180deg, #7a4cf0, #4a22b8); border: 0; border-radius: 16px; box-shadow: 0 4px 0 #2a1070; }
 .as-raise:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #2a1070; }
 .as-raise:disabled { filter: grayscale(.9) brightness(.6); }
@@ -92,6 +92,9 @@
   .as-mid { min-width: 0; }
   .as-player { padding: 6px 8px; gap: 8px; }
   .as-avatar { width: 38px; height: 38px; font-size: 21px; }
-  .as-raise { min-height: 60px; font-size: 20px; }
+  .as-raise { min-height: 60px; font-size: 19px; padding-inline: 4px; }
+  .as-quick { gap: 6px; }
+  .as-player { flex-wrap: wrap; }
+  .as-player-tag { flex-basis: 100%; text-align: right; line-height: 1; min-height: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .as-rays, .as-title .as-gavel, .urgent .as-secs { animation: none; } .auction-stage, .as-stamp-big, .as-bid-amount.bump { animation: none; } }
