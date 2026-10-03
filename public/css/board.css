@@ -177,7 +177,7 @@
 .square.side-left .bldg:empty, .square.side-right .bldg:empty { background: none; }
 .b3d { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); animation: b-pop .45s cubic-bezier(.2, 1.4, .4, 1) both; }
 .b3d.hotel { grid-column: 1 / -1; grid-row: 1 / -1; width: calc(var(--bs) * 1.7); height: calc(var(--bs) * 2.05); }
-.square.side-left .b3d.hotel, .square.side-right .b3d.hotel { width: calc(var(--bz) * .95); height: calc(var(--bz) * 1.1); margin: 0; }
+.square.side-left .b3d.hotel, .square.side-right .b3d.hotel { width: calc(var(--bz) * 1.1); height: calc(var(--bz) * 1.3); margin: 0; }
 @keyframes b-pop { from { transform: scale(0) translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ---------- ownership: the square glows in its owner's colour ---------- */
