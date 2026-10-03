@@ -35,20 +35,30 @@ Build this as a web application using:
 
 ## 3. VISUAL STYLE
 
-- Dark navy/black background — same as RichUp.io
-- Board sits around the edges of the screen as a square
-- Center of the board contains:
-  - Siam Streets logo (top)
-  - Two 3D dice (center)
-  - Live activity feed below the dice (scrolling log of game events)
-  - Start game button before game begins
-- Property squares have colored region indicators
-- Each square shows property name and price in Thai Baht ฿
-- Clean, modern, readable font
-- Rounded corners on property squares
-- Corner squares are larger than regular squares
-- Square icons: **Treasure** squares use a custom gold treasure-chest icon (lid slightly open, warm glow, coins spilling out); the **In Prison** and **Go To Prison** corners use a jail-bars icon (a dark cell with vertical steel bars). The same icons appear wherever those squares are referenced in the UI (activity feed, player cards).
-- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. On **tall phones** (720px or taller) the space above the board becomes a large activity feed (the feed moves out of the board center; the logo and dice grow to fill it), so players can see many more recent events; the board sits directly above the dock. On **shorter phones** the feed stays in the board center and the board is centered vertically between the top bar (header, colour strip, players) and the dock with equal spacing above and below. Tablet and desktop keep the feed and the controls in the center of the board.
+- **Stage:** a deep purple-indigo stage background (not flat navy); the board sits in a dark frame with a thin gold rim so the colours stay vivid
+- Board sits around the edges of the screen as a square (a tall rectangle on phones — see below)
+- Center of the board contains the Siam Streets emblem logo (top), two 3D dice (center), the bot "thinking" pill, and the action buttons / Start game settings. **The activity feed is no longer in the board centre** (see Sections 25 and 35)
+- **Jewel palette (single source: `palette.js`).** Every property square is painted across its whole face in the rich gradient of its colour group, with a light bevel and a glossy top sheen — not just a coloured strip. Names are crisp bold white with a dark shadow; the price sits in a small dark pill in gold. A test checks white-on-colour contrast of at least 4.5:1 on both gradient stops and that the 8 groups stay clearly distinct.
+
+| Group | Jewel | Light stop → deep stop |
+|---|---|---|
+| Red (Bangkok Party) | Ruby | #d0203a → #8f0d24 |
+| Orange (East Coast) | Amber | #c0540a → #8a3a04 |
+| Yellow (South Islands) | Topaz | #977000 → #6e4d00 |
+| Green (North) | Emerald | #12823f → #075a2c |
+| Blue (Central/Historic) | Sapphire | #2f63e8 → #1a3aa0 |
+| Purple (Gulf South) | Amethyst | #9040e0 → #5e21b0 |
+| Brown (Mid Bangkok) | Bronze | #9a5530 → #5f3018 |
+| Pink (Premium Bangkok) | Rose | #d01f80 → #8f1058 |
+
+- **Other squares:** airports steel-teal with a plane; Thai Massage turquoise with a lotus; Income Tax a coin and Luxury Tax a gem on crimson; Surprise indigo with a star; Treasure gold-bronze with the treasure-chest icon (lid slightly open, warm glow, coins spilling out)
+- **Corner squares** are individually illustrated and larger than regular squares: **Start** — a checkered flag on emerald; **In Prison** — the jail-bars icon on orange; **Songkran** — a water splash with droplets on blue; **Go To Prison** — a police siren with a skull badge on a red/blue flash background. The same icons appear in the activity feed and player cards.
+- **Player ownership colours.** Each seat has its own glow colour, separate from the property colours and used on the player card, the token ring and the board: cyan `#00e5ff`, lime `#b8ff2c`, magenta `#ff2bd6`, white `#ffffff`, solar orange `#ff9d1a`, lavender `#c9a8ff`. A property square glows in its owner's colour (outer glow, inner light and a small owner badge on its outer corner). A mortgaged square is dimmed and hatched with a weaker glow; the glow disappears when the property returns to the bank.
+- **3D buildings.** Houses are small isometric **green** houses (up to 4, drawn as a 2×2 block on top/bottom squares and a row on side squares); a hotel is a taller **red** tower with a gold flag that replaces the four houses. They pop in when built and stay inside their square at every screen size.
+- **Phone board (screens up to 600px wide).** The board is a tall rectangle (about 1.5–1.7× as tall as it is wide) with deep edge squares so every one of the 40 names and prices is readable. On the top and bottom rows the label is rotated to run along the depth of the square; left and right squares use horizontal text with a building row at the foot. Font sizes are fitted per square (no clipping, no ellipsis); an automated test measures all 40 squares at 320, 360, 375, 390, 412 and 430px wide, with and without buildings. Minimum text size is 8px (7px on 320px-wide phones, the one documented exception). Very short phones may scroll a little to see the whole board.
+- **Phone controls:** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row) sit in a fixed dock at the bottom of the screen in easy one-handed thumb reach — large buttons, always visible. The colour legend is removed on phones (the squares carry the colour).
+- Clean, modern, readable font; rounded corners on squares.
+- **Logo:** a luxury emblem — a glossy deep-purple ellipse with a double gold ring, soft light rays and sparkles, "SIAM STREETS" in engraved gold lettering (Cinzel Decorative, bundled), a small lotus ornament between the words. Used large on the landing screen (over a purple spotlight backdrop) and compact in the board centre.
 
 ---
 
@@ -226,9 +236,13 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 | Pass Start salary | ฿2,000 | Fixed |
 | Land ON Start | ฿4,000 | Fixed |
 | Max players | 6 | 2-6 |
-| Bots | Available | 2 difficulty levels — Easy and Hard |
+| Bots | Available | 2 difficulty levels — Easy and Hard (chosen on the setup screen; default Easy; shown on each bot's card) |
 | Turn timer | None | No timer |
 | Game speed | Fast | — |
+
+**Bot behaviour.** *Easy*: buys about 60% of the time and keeps a ฿1,000 reserve, builds cautiously, bids up to roughly 65% of a property's price, answers trades by comparing values. *Hard*: buys almost everything it can afford (small ฿250 reserve), chases colour sets, bids up to 2× the price for a property that completes its set (1.5× to block an opponent's set, 0.9× otherwise), builds aggressively where extra rent per Baht is best (฿500 reserve), unmortgages promptly, pays the jail fine early and waits in jail late, and judges trades rationally (counters with a cash shortfall). Neither level ever starts a trade. In bot-vs-bot tests Hard wins at least 60% of head-to-head games against Easy.
+
+**Bot thinking time.** Before any real decision (buy / auction, bid, build, mortgage, unmortgage, jail choice, trade reply) a bot pauses a random 2–3 seconds and a "[Name] is thinking…" pill shows; rolling and ending the turn take about 1 second.
 
 ---
 
@@ -297,10 +311,14 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 - Automatically triggers when:
   - A player lands on an unowned property and declines to buy it
   - A player lands on an unowned property and cannot afford it
-- All players except the one who triggered the auction can bid
+- All players except the one who triggered the auction can bid (the decliner is shown greyed out as "Watching")
 - Minimum bid starts at ฿1
 - Highest bidder wins the property and pays immediately
 - If no one bids — property remains with the bank
+- **Full-screen stage.** The board disappears and the auction takes over the whole screen: the property in its group colour with its list price, the **current high bid in large gold digits with the leading bidder**, every player with live cash, and a dramatic **10-second countdown ring**. Phones get the same stage as a full screen.
+- **Open bidding, one clock.** There is no turn order: anyone eligible can bid at any time (quick raises +10 / +50 / +100 / +500, or any amount). **Every new bid restarts the countdown at 10.** The clock turns red and pulses below 3 seconds. **When it reaches zero the auction ends:** the hammer falls with a SOLD! (or NO SALE) stamp, the winner pays, and the board returns.
+- Bots bid after their 2–3 second thinking pause and never outbid themselves. (Known consequence, accepted: in a 2-player game the only eligible bidder can win for ฿1.)
+- The engine has no clock: it exposes `bid()` and `closeAuction()`; the game controller owns the 10-second timer.
 
 ---
 
@@ -317,6 +335,8 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 - The offer is re-checked at the moment it is answered
 - **Negotiate** sends a counter-offer: the roles swap and the original proposer must Accept, Decline or Negotiate again (at most 6 rounds)
 - Trades can be proposed on your own turn (any step of it, including while in debt); "any time" becomes real-time in multiplayer (Phase 4)
+- **Trade screen.** Choose a partner from tiles showing every other player's avatar, name and cash. The composer has two clearly labelled panels — **You offer** (green) and **You ask for** (gold) — with property tiles in their group colours, cash fields with − / + steppers (฿100 steps), jail-card steppers, and a plain-language summary above a large Send button. An incoming offer shows **Accept / Decline / Negotiate** as large buttons (at least 56px tall) and must be answered.
+- **Everyone sees a trade in progress.** A banner under the top bar names both sides and what is on the table ("Trade in progress", then Declined / Completed). Players who are not part of the trade see it too; the participants see it while they wait. Every step is also logged in the feed.
 - Easy bots answer offers by comparing values (mortgaged property counts half), refuse to hand anyone a full colour set, and may counter by asking for extra cash; they never start a trade
 
 ---
@@ -341,6 +361,8 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 ---
 
 ## 21. TREASURE CARDS — 10 Cards (shuffled randomly)
+
+*Card display time (Sections 20 and 21): the human's card waits for a tap; a bot's card stays up 4.5 seconds (2 seconds longer than before) with a countdown bar, and its effect applies only after the card closes plus a short beat, so the card can be read first.*
 
 | # | Card Text | Effect |
 |---|---|---|
@@ -402,7 +424,7 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 
 ## 25. LIVE ACTIVITY FEED
 
-A continuously scrolling log in the center of the board showing all game events in real time:
+A continuously scrolling log showing all game events in real time. **Placement:** on screens 1100px wide or more it is a left sidebar panel at the top-left, always visible, scrolling with the newest entry at the bottom, and never covering the board. Below 1100px (tablets and phones) it becomes a collapsible one-line ticker under the header showing the latest event; tapping it drops the full list down from the top-left.
 
 - 🛺 [Player] bought [Property] for ฿[amount]
 - ✈️ [Player] passed Start and collected ฿2,000
@@ -444,7 +466,10 @@ Other events in the same style: `🏦` mortgaged / unmortgaged, `💵` sold a ho
 | Trade completed | Success sound |
 | Auction won | Gavel sound |
 | Intro music | Short Thai-style theme, 8-9 seconds — plays on landing screen |
-| Crowd applause | Plays once when transitioning from lobby into the live board |
+| Crowd applause | Plays once (about 3 seconds, swelling then fading) when transitioning from the setup/lobby screen into the live board |
+| Camera shutter | A soft click with each camera flash during the start sequence |
+
+**Game-show start.** When the host presses Start, the board is revealed under a spotlight while a crowd applauds and small camera-flash starbursts pop at random places on screen for about 2.8 seconds; the first turn begins afterwards. Photosensitivity safety: flashes are small and soft (never full-screen), never more than 3 per second (the game keeps to about 2), and users who prefer reduced motion get a calm golden fade with no flashes. The mute button silences the sounds.
 
 ---
 
@@ -596,16 +621,18 @@ Display as Coming Soon at launch. Rules visible to players:
 | Roll Dice | Roll both dice — only active on your turn |
 | Buy | Purchase property you landed on |
 | Auction | Decline to buy — triggers auction |
-| Build | Buy houses/hotels on owned complete groups — in the **Properties** manager (one button per property, with its cost; **Sell** gives the 50% refund) |
-| Mortgage | Mortgage a property for 50% value — in the Properties manager |
-| Unmortgage | Pay back mortgage — in the Properties manager |
+| Buy House / Buy Hotel | Tap one of your own properties on the board: a popup shows **Buy House** with its cost (**Sell House** gives the 50% refund). Also available in the Properties manager |
+| Mortgage | In the same square popup (shows the 50% value you receive) and in the Properties manager |
+| Unmortgage | In the same square popup (shows what you pay back) and in the Properties manager |
 | Trade | Initiate trade with another player (opens the trade dialog; incoming offers show Accept / Decline / Negotiate) |
 | Declare Bankruptcy | Voluntarily go bankrupt — always asks for confirmation; also offered in the debt banner |
 | Use card | Use a Get Out of Jail Free card (only while in prison and holding one) |
 | Vote Kick | Initiate vote to remove a player |
 | End Turn | End your turn manually |
 
-The **Properties** and **Trade** buttons sit beside the main buttons (in the board centre on larger screens, in the bottom dock on phones). Property management is hidden during auctions.
+The **Properties** and **Trade** buttons sit beside the main buttons (in the board centre on larger screens, in the bottom dock on phones). Property management is unavailable during auctions (the full-screen stage covers the board).
+
+**Square popup.** Tapping any square opens a popup (a bottom sheet on phones): for **your own** property it shows large (at least 52px) **Buy House / Sell House / Mortgage / Unmortgage** buttons with their prices and, when blocked, the reason; for anyone else's or an unowned property it shows the owner, buildings, mortgage status and the rent table with the current level highlighted. Actions run only on your own turn, through the normal turn loop. Tapping Income Tax still shows its full rule: "10% of your cash (max ฿2,000)". The **Properties** manager remains as an overview and the home of Declare Bankruptcy.
 
 ---
 
@@ -706,8 +733,9 @@ This is the very first screen a player sees when they open Siam Streets.
 
 ---
 
-*Document version: 4 — Ready for Claude Code*
+*Document version: 5 — Ready for Claude Code*
 *Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%" (tap card shows the full rule); treasure-chest and jail-bars icons; phone layout with a bottom dock and, on tall phones, a large activity feed above the board (Section 3).*
 *Changes in v4 (Phase 3): full-set rent doubling (Section 6); building, mortgage and jail-card rules (Sections 9, 13, 15); partial-payment debt system (Sections 16, 17); trade rules (Section 19); how cards work (Sections 20, 21); Properties manager, Trade and confirmed bankruptcy (Section 35).*
+*Changes in v5 (Phase 3.5): jewel colour system, illustrated corners, player ownership glow and 3D houses/hotels (Section 3); phone board geometry (Section 3); luxury logo (Section 3); Easy/Hard bots and 2–3 s thinking time (Section 12); full-screen timed auction (Section 18); trade redesign with observer banner (Section 19); longer bot card display (Sections 20, 21); activity feed in a left sidebar / ticker (Section 25); applause, camera flashes and reduced-motion variant (Section 26); square popup for build and mortgage (Section 35).*
 *Game: Siam Streets | siamstreets.io*
 *Slogan: Can you rule the streets of Siam?*
