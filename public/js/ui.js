@@ -336,15 +336,11 @@
   function initDock() {
     const dock = $('dock');
     const phone = window.matchMedia('(max-width: 600px)');
-    // Tall phones have room to spare above the board, so the feed moves there and grows (see style.css).
-    const tallPhone = window.matchMedia('(max-width: 600px) and (min-height: 720px)');
     const place = () => {
       const center = document.querySelector('#board .board-center');
       const target = phone.matches ? dock : center;
-      (tallPhone.matches ? $('feed-slot') : center).appendChild($('feed'));
       // order: setup, manage bar, actions, auction (in the dock the manage bar sits above the big buttons)
       ['setup', 'debt-banner', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
-      $('feed').scrollTop = $('feed').scrollHeight;
       measure();
     };
     // The dock's height tells the layout how much room to leave, so the board stays centred between
@@ -354,12 +350,22 @@
     };
     if (window.ResizeObserver) new ResizeObserver(measure).observe(dock);
     phone.addEventListener('change', place);
-    tallPhone.addEventListener('change', place);
     place();
+  }
+
+  // Under 1100px the activity feed is a one-line pull-down bar: tap to open the list, tap again to close it.
+  function initFeedPanel() {
+    const panel = $('feed-panel');
+    const btn = $('feed-toggle');
+    const set = (open) => { panel.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) $('feed').scrollTop = $('feed').scrollHeight; };
+    btn.addEventListener('click', () => set(!panel.classList.contains('open')));
+    document.addEventListener('click', (e) => { if (!panel.contains(e.target)) set(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') set(false); });
   }
 
   function init(onStart) {
     initDock();
+    initFeedPanel();
     bindButtons();
     bindAuction();
     initSetup(onStart);
