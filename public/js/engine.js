@@ -80,7 +80,7 @@
     const current = () => state.players[state.current];
     const balances = () => state.players.map((p) => p.cash);
     const emit = (list, type, extra) => {
-      list.push(Object.assign({ type }, extra, { balances: balances(), debts: state.players.map((q) => debtTotal(q.id)) }));
+      list.push(Object.assign({ type }, extra, { balances: balances(), debts: state.players.map((q) => debtTotal(q.id)), pot: state.songkranPot }));
     };
     const rollDie = () => {
       const r = game.rng();
@@ -131,6 +131,7 @@
         } else {
           emit(list, 'debtPayment', { debtId: d.id, playerId: d.debtor, creditor: d.creditor, amount: pay, remaining: d.amount, owed: debtTotal(d.debtor) });
         }
+        if (d.creditor === 'pot') emit(list, 'potAdded', { playerId: d.debtor, amount: pay, source: d.reason === 'tax' ? 'Tax payment' : 'Fine payment' });
       });
     }
 
@@ -297,9 +298,10 @@
         p.cash += fx.amount;
         emit(list, 'cardEffect', { playerId: p.id, kind: 'collect', amount: fx.amount });
       } else if (fx.type === 'pay') {
-        const r = charge(p, fx.amount, 'bank');
+        const r = charge(p, fx.amount, 'pot');          // card fines and fees feed the Songkran pot
         emit(list, 'cardEffect', { playerId: p.id, kind: 'pay', amount: fx.amount, paid: r.paid });
-        if (r.owed) owe(p, 'bank', r.owed, 'card', list);
+        if (r.paid > 0) emit(list, 'potAdded', { playerId: p.id, amount: r.paid, source: 'Card fine' });
+        if (r.owed) owe(p, 'pot', r.owed, 'card', list);
       } else if (fx.type === 'collectEach') {
         const from = [];
         const short = [];
@@ -337,6 +339,7 @@
         const amount = sq.id === 5 ? Math.min(Math.floor(p.cash * 0.10), TAX_10_CAP) : LUXURY_TAX;
         const r = charge(p, amount, 'pot');
         emit(list, 'tax', { playerId: p.id, square: sq.id, amount, paid: r.paid });
+        if (r.paid > 0) emit(list, 'potAdded', { playerId: p.id, amount: r.paid, source: sq.name });
         if (r.owed) owe(p, 'pot', r.owed, 'tax', list);
       } else if (sq.type === 'card') {
         drawCard(p, sq.name === 'Surprise' ? 'surprise' : 'treasure', list);
@@ -424,9 +427,10 @@
       if (!p.jailed) throw new Error('Player is not in prison');
       if (p.cash < JAIL_FINE) throw new Error('Cannot afford the fine');
       const list = [];
-      charge(p, JAIL_FINE, 'bank');
+      charge(p, JAIL_FINE, 'pot');
       p.jailed = false; p.jailTurns = 0;
       emit(list, 'jailFine', { playerId: p.id, amount: JAIL_FINE });
+      emit(list, 'potAdded', { playerId: p.id, amount: JAIL_FINE, source: 'Prison fine' });
       return list;
     };
 

@@ -204,7 +204,9 @@ Build this as a web application using:
 | Income Tax (square 5) | Player pays 10% of current cash OR flat ฿2,000 — whichever is less. The square itself shows only "10%"; tapping it shows the full rule ("10% of your cash (max ฿2,000)"). The exact amount is worked out automatically when a player lands on it and appears in the activity feed |
 | Luxury Tax (square 39) | Player pays flat ฿1,000 |
 
-All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corner square** — when a player lands on it they collect everything in the pot.
+All tax payments **and fines** go into the **Songkran pot**: the two tax squares, the ฿500 prison fine, and every Surprise / Treasure card that makes you pay (a shortfall owed on any of these is owed to the pot, Section 17). Songkran (square 21) is a **corner square** — when a player lands on it they collect everything in the pot.
+
+**The pot is shown live on the Songkran square**: "Collect the pot" with the current amount below it in gold (for example ฿2,400), updating in real time every time money enters it and dropping to ฿0 when someone collects it. Every deposit is also logged in the activity feed (Section 25): `💰 Income Tax ฿1,000 added to Songkran pot — Total: ฿2,400`.
 
 ---
 
@@ -324,7 +326,7 @@ All tax payments go into the **Songkran pot**. Songkran (square 21) is a **corne
 
 ## 20. SURPRISE CARDS — 10 Cards (shuffled randomly)
 
-*How cards work (Sections 20 and 21):* both decks are shuffled at the start of the game. A drawn card is shown on screen (the human player taps OK before its effect is applied; bots' cards continue automatically after a moment) and its effect is then applied automatically. Used cards go to the bottom of their deck. Fines and fees are paid to the bank (only tax squares feed the Songkran pot). "Collect from each player" takes ฿200 from every other active player; anyone who cannot pay it becomes a debtor (Section 17). "Miss one turn" skips your **next** turn; the rest of the current turn is unaffected.
+*How cards work (Sections 20 and 21):* both decks are shuffled at the start of the game. A drawn card is shown on screen (the human player taps OK before its effect is applied; bots' cards continue automatically after a moment) and its effect is then applied automatically. Used cards go to the bottom of their deck. Fines and fees from cards are paid into the Songkran pot (Section 10). "Collect from each player" takes ฿200 from every other active player; anyone who cannot pay it becomes a debtor (Section 17). "Miss one turn" skips your **next** turn; the rest of the current turn is unaffected.
 
 | # | Card Text | Effect |
 |---|---|---|
@@ -418,6 +420,7 @@ A continuously scrolling log in the center of the board showing all game events 
 - ⚠️ [Player] owes ฿[amount] to [Player] — debt pending
 - ✅ [Player] resolved their debt
 - 💀 [Player] went bankrupt
+- 💰 [Source] ฿[amount] added to Songkran pot — Total: ฿[pot] (Income Tax, Luxury Tax, Prison fine, Card fine)
 - 🎉 [Player] wins the game!
 
 Other events in the same style: `🏦` mortgaged / unmortgaged, `💵` sold a house or hotel, `💵` paid toward a debt, `🆓` keeps / used a Get Out of Jail Free card, `🚫` misses a turn, `🤝` trade offered / countered / declined (a completed trade also lists what moved), `🔨` auction events, `🧾` tax, `💦` Songkran pot.

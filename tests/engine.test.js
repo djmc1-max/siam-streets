@@ -3,7 +3,7 @@
 const test = require('node:test');
 const { BOARD } = require('../public/js/data.js');
 const { CONSTANTS } = require('../public/js/engine.js');
-const { assert, money, newGame, rig, placeBefore, types, sectionTable } = require('./helpers.js');
+const { assert, money, newGame, rig, placeBefore, types, sectionTable, landOn } = require('./helpers.js');
 
 // ---- Section 6/7/8 tables are read straight from GAME_DESIGN.md ----
 test('Section 6: all 22 properties match the pricing table (price + every rent level)', () => {
@@ -303,4 +303,50 @@ test('settings: starting Baht must be one of the Section 12 options, 2-6 players
   assert.throws(() => newGame(1));
   assert.throws(() => newGame(7));
   [10000, 15000, 20000, 25000, 30000].forEach((c) => assert.equal(newGame(2, { startingCash: c }).state.players[0].cash, c));
+});
+
+// ---- Songkran pot is tracked live: every event carries the running total, and each deposit is announced ----
+test('pot: tax, prison fines and card fines each add to the pot with a potAdded event and a running total', () => {
+  const g = newGame(); placeBefore(g, 0, 39, 7); rig(g, [3, 4]);
+  let ev = g.roll();                                                    // Luxury Tax 1,000
+  const added = ev.filter((e) => e.type === 'potAdded');
+  assert.equal(added.length, 1);
+  assert.deepEqual([added[0].amount, added[0].source, added[0].pot], [1000, 'Luxury Tax', 1000]);
+  assert.ok(ev.every((e) => typeof e.pot === 'number'), 'every event carries the pot');
+  assert.equal(ev[ev.length - 1].pot, 1000);
+
+  // a prison fine
+  g.state.phase = 'roll'; g.state.current = 0;
+  const p = g.state.players[0]; p.jailed = true; p.jailTurns = 1; p.pos = 11;
+  ev = g.payJailFine();
+  const fine = ev.find((e) => e.type === 'potAdded');
+  assert.deepEqual([fine.amount, fine.source, fine.pot], [500, 'Prison fine', 1500]);
+  assert.equal(g.state.songkranPot, 1500);
+
+  // a card fine (Surprise 7: pay 1,000)
+  g.state.phase = 'roll'; g.state.current = 0; g.state.players[0].jailed = false;
+  g.state.decks.surprise = ['S7'].concat(g.state.decks.surprise.filter((i) => i !== 'S7'));
+  ev = landOn(g, 0, 8);
+  const cf = ev.find((e) => e.type === 'potAdded');
+  assert.deepEqual([cf.amount, cf.source, cf.pot], [1000, 'Card fine', 2500]);
+
+  // landing on Songkran empties it, and the events say so
+  g.state.phase = 'roll'; g.state.current = 0;
+  placeBefore(g, 0, 21, 7); rig(g, [3, 4]);
+  ev = g.roll();
+  assert.equal(ev.find((e) => e.type === 'songkran').amount, 2500);
+  assert.equal(ev[ev.length - 1].pot, 0);
+});
+
+test('pot: a debt paid down later still announces each deposit', () => {
+  const g = newGame(); g.state.players[0].cash = 300; placeBefore(g, 0, 39, 7); rig(g, [3, 4]);
+  const ev = g.roll();                                                  // owes 1,000, pays 300
+  assert.equal(ev.find((e) => e.type === 'potAdded').amount, 300);
+  assert.equal(g.state.songkranPot, 300);
+  assert.equal(g.debtTotal(0), 700);
+  g.state.owners[2] = 0;                                                // raise cash by mortgaging Khao San Rd (+300)
+  const ev2 = g.mortgage(0, 2);
+  const later = ev2.find((e) => e.type === 'potAdded');
+  assert.deepEqual([later.amount, later.pot], [300, 600]);
+  assert.equal(g.state.songkranPot, 600);
 });

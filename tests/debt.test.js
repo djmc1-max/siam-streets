@@ -96,13 +96,14 @@ test('taxes: a shortfall is paid into the Songkran pot immediately and the rest 
   assert.equal(g.debtTotal(0), 300);
 });
 
-test('cards: a fine you cannot pay becomes a debt to the bank', () => {
+test('cards: a fine you cannot pay becomes a debt to the Songkran pot', () => {
   const g = newGame(); g.state.players[0].cash = 200;
   g.state.decks.surprise = ['S6'].concat(g.state.decks.surprise.filter((i) => i !== 'S6'));   // pay ฿1,500
   landOn(g, 0, 8);
   assert.equal(g.state.players[0].cash, 0);
   assert.equal(g.debtTotal(0), 1300);
-  assert.equal(g.state.debts[0].creditor, 'bank');
+  assert.equal(g.state.debts[0].creditor, 'pot');
+  assert.equal(g.state.songkranPot, 200);          // the 200 it could pay went in at once
   assert.equal(g.state.phase, 'debt');
 });
 

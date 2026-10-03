@@ -293,6 +293,10 @@ body { overflow-x: hidden; }
 .square .price { color: var(--accent); font-weight: 700; margin-top: .6em; }
 .square .icon { font-size: 1.9em; line-height: 1; }
 .square .sub { color: var(--text-dim); font-size: .85em; }
+.square .pot { margin-top: .25em; color: var(--accent); font-weight: 800; font-size: 1.1em; }
+.square .pot.bump { animation: pot-bump .6s ease-out; }
+@keyframes pot-bump { 0% { transform: scale(1.5); color: #fff3b0; } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .square .pot.bump { animation: none; } }
 
 /* Colored region strip sits on the edge nearest the board centre. */
 .square .strip { flex: 0 0 22%; background: var(--strip, transparent); }

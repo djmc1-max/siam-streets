@@ -65,6 +65,12 @@
       s.textContent = sq.sub;
       body.appendChild(s);
     }
+    if (sq.id === 21) {                       // Songkran shows the live pot under "Collect the pot"
+      const pot = document.createElement('div');
+      pot.className = 'pot';
+      pot.textContent = baht(0);
+      body.appendChild(pot);
+    }
     el.appendChild(body);
     return el;
   }
@@ -144,5 +150,14 @@
     });
   }
 
-  window.SiamBoard = { renderBoard, fitNames };
+  function setPot(amount) {
+    const el = document.querySelector('#board .square[data-id="21"] .pot');
+    if (!el) return;
+    const text = baht(amount);
+    if (el.textContent === text) return;
+    el.textContent = text;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
+
+  window.SiamBoard = { renderBoard, fitNames, setPot };
 })();

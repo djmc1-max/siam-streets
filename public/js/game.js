@@ -41,6 +41,7 @@
 
     const view = seats.map((s, i) => ({ id: i, name: s.name, isBot: s.isBot, icon: TOKENS.find((t) => t.id === s.tokenId).icon }));
     Feed.clear();
+    window.SiamBoard.setPot(0);
     UI.clearOwners();
     UI.showPlay();
     UI.renderPlayers(view, settings.startingCash);
@@ -161,6 +162,7 @@
       await handle(ev);
       if (ev.balances) UI.setBalances(ev.balances);
       if (ev.debts) UI.setDebts(ev.debts);
+      if (ev.pot !== undefined) window.SiamBoard.setPot(ev.pot);
     }
   }
 
@@ -232,6 +234,9 @@
       }
       case 'tax':
         Feed.add('🧾', n + ' paid ' + fmtBaht(ev.paid) + ' tax — added to the Songkran pot');
+        break;
+      case 'potAdded':
+        Feed.add('💰', ev.source + ' ' + fmtBaht(ev.amount) + ' added to Songkran pot — Total: ' + fmtBaht(ev.pot));
         break;
       case 'songkran':
         Feed.add('💦', ev.amount > 0
@@ -345,6 +350,7 @@
     Tokens.reset();
     UI.clearOwners();
     Feed.clear();
+    window.SiamBoard.setPot(0);
     Feed.add('🎲', 'Choose your settings and start a new game');
     UI.showSetup();
   }
