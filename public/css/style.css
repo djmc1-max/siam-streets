@@ -292,6 +292,7 @@ body { overflow-x: hidden; }
   max-width: 100%;
 }
 .square .price { color: var(--accent); font-weight: 700; margin-top: .6em; }
+.square .label { display: contents; }
 .square .icon { font-size: 1.9em; line-height: 1; }
 .square .sub { color: var(--text-dim); font-size: .85em; }
 .square .pot { margin-top: .25em; color: var(--accent); font-weight: 800; font-size: 1.1em; }
@@ -1025,3 +1026,64 @@ body { overflow-x: hidden; }
   animation: cam-flash .42s ease-out forwards;
 }
 @keyframes cam-flash { 0% { opacity: 0; transform: scale(.4) rotate(0); } 18% { opacity: .9; } 100% { opacity: 0; transform: scale(1.15) rotate(25deg); } }
+
+/* =====================================================================
+   Phones (<= 600px): a tall board with deep edge squares so every name and price is readable.
+   Top and bottom rows run their labels along the depth of the square (rotated); the sides stay horizontal.
+   ===================================================================== */
+@media (max-width: 600px) {
+  #game { padding-inline: 2px; }
+  #game .legend { display: none; }          /* the coloured strips on the squares carry the colour */
+  .board {
+    --board: 100cqw;
+    --cw: clamp(54px, calc((100cqw - 26px - 9 * 22px) / 2), 64px);   /* depth of the left / right squares */
+    --ch: 80px;                                                       /* depth of the top / bottom squares */
+    --bh: clamp(548px, calc(100dvh - var(--dock-h, 96px) - 200px), calc(100cqw * 1.7));
+    width: 100cqw;
+    height: var(--bh);
+    grid-template-columns: var(--cw) repeat(9, minmax(0, 1fr)) var(--cw);
+    grid-template-rows: var(--ch) repeat(9, minmax(0, 1fr)) var(--ch);
+    gap: 2px;
+    padding: 2px;
+  }
+  .square { font-size: 9.5px; line-height: 1.1; }
+  .square .body { padding: 1px; min-height: 0; }
+  .square .label { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; min-width: 0; min-height: 0; max-width: 100%; text-align: center; overflow: hidden; }
+  .square .name { display: block; -webkit-line-clamp: unset; overflow: visible; max-width: 100%; color: #fff; }
+  .square .name.clip { overflow: hidden; }
+  .square .price { margin-top: .2em; font-size: 1em; }
+  .square .sub { display: block; font-size: .95em; }
+  .square .icon { font-size: 12px; }
+  .square .icon-svg { width: 14px; height: 14px; }
+  .square .icon-chest { width: 16px; height: 16px; }
+
+  /* top and bottom: the label runs along the depth of the square, reading bottom-to-top */
+  .square.side-top:not(.corner) .body, .square.side-bottom:not(.corner) .body { flex-direction: column; padding: 0; }
+  .square.side-top:not(.corner) .label, .square.side-bottom:not(.corner) .label { writing-mode: vertical-rl; transform: rotate(180deg); padding: 1px 1.5px; }
+  .square.side-top:not(.corner) .name, .square.side-bottom:not(.corner) .name { white-space: nowrap; }
+  .square.side-top:not(.corner) .price, .square.side-bottom:not(.corner) .price { margin-top: 0; }
+  .square.side-top:not(.corner) .strip .house, .square.side-bottom:not(.corner) .strip .house { width: 4px; min-width: 4px; }
+  .square.side-top .strip, .square.side-bottom .strip { gap: 1px; padding: 0 1px; }
+
+  /* left and right: the short squares show their icon as a faint watermark behind the text */
+  .square.side-left:not(.corner):not([data-group]) .icon, .square.side-right:not(.corner):not([data-group]) .icon { position: absolute; inset: 0; display: grid; place-items: center; opacity: .35; pointer-events: none; font-size: 26px; }
+  .square.side-left:not([data-group]) .icon-svg, .square.side-right:not([data-group]) .icon-svg { width: 28px; height: 28px; }
+  .square.side-left .body, .square.side-right .body { padding: 1px 2px; }
+  .square.side-left .strip, .square.side-right .strip { flex-basis: 17%; padding: 1px 0; }
+  .square.side-left .strip .hotel, .square.side-right .strip .hotel { min-width: 5px; width: 60%; }
+
+  /* corners: icon, name, note and (Songkran) the pot all stay readable */
+  .square.corner { font-size: 8.5px; }
+  .square.corner .body { padding: 2px; }
+  .square.corner .icon { font-size: 15px; }
+  .square.corner .icon-svg { width: 18px; height: 18px; }
+  .square.corner .name { font-size: 1.05em; }
+  .square.corner .pot { margin-top: .1em; font-size: 1.1em; }
+
+  /* the freed centre: logo and dice get the room */
+  .board-center { justify-content: center; gap: calc(var(--u) * 6); padding: calc(var(--u) * 1.5); }
+  .board-center .logo--compact { width: calc(var(--u) * 52); }
+  .board-center .die3d { --s: calc(var(--u) * 13); }
+  .board-center .dice { gap: calc(var(--u) * 9); margin-bottom: 0; }
+  .owner-badge { width: 13px; height: 13px; font-size: 7px; }
+}

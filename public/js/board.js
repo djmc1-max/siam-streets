@@ -48,29 +48,36 @@
       else icon.textContent = sq.icon;
       body.appendChild(icon);
     }
+    // name + price/sub live in one .label so phones can rotate them together (display: contents elsewhere)
+    const label = document.createElement('div');
+    label.className = 'label';
     const name = document.createElement('div');
     name.className = 'name';
-    name.textContent = sq.name;
-    body.appendChild(name);
+    // one long single word may break in the middle on a narrow phone
+    const BREAKS = { Suvarnabhumi: ['Suvarna', 'bhumi'], Sukhumvit: ['Sukhum', 'vit'] };
+    const parts = BREAKS[sq.name] || [sq.name];
+    parts.forEach((part, i) => { if (i) name.appendChild(document.createElement('wbr')); name.appendChild(document.createTextNode(part)); });
+    label.appendChild(name);
 
     const price = priceLabel(sq);
     if (price) {
       const p = document.createElement('div');
       p.className = 'price';
       p.textContent = price;
-      body.appendChild(p);
+      label.appendChild(p);
     } else if (sq.sub) {
       const s = document.createElement('div');
       s.className = 'sub';
       s.textContent = sq.sub;
-      body.appendChild(s);
+      label.appendChild(s);
     }
     if (sq.id === 21) {                       // Songkran shows the live pot under "Collect the pot"
       const pot = document.createElement('div');
       pot.className = 'pot';
       pot.textContent = baht(0);
-      body.appendChild(pot);
+      label.appendChild(pot);
     }
+    body.appendChild(label);
     el.appendChild(body);
     return el;
   }
@@ -132,21 +139,37 @@
     wireDetail(boardEl);
   }
 
-  // Shrink a square's name just enough that no word is split or clipped.
-  // Names are only ever wrapped at spaces (never mid-word), so a word wider than the
-  // square shows up as horizontal overflow, which we fit by reducing the font size.
+  // Shrink a square's text just enough that no word is split or clipped.
+  // Desktop / tablet: the name alone is fitted (names only wrap at spaces, so a too-long word shows up as
+  // horizontal overflow). Phones: the whole label (name + price) is fitted on both axes, because the labels on
+  // the top and bottom rows are rotated and run along the depth of the square.
   const MIN_NAME_PX = 6;
+  const MIN_PHONE_PX = 7;
+  const overflows = (el) => el.scrollWidth > el.clientWidth + 0.6 || el.scrollHeight > el.clientHeight + 0.6;
   function fitNames() {
-    document.querySelectorAll('#board .square .name').forEach((el) => {
-      el.classList.remove('clip');
-      el.style.fontSize = '';
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      while (el.scrollWidth > el.clientWidth + 0.5 && size > MIN_NAME_PX) {
-        size -= 0.5;
-        el.style.fontSize = size + 'px';
+    const phone = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+    document.querySelectorAll('#board .square').forEach((sq) => {
+      const name = sq.querySelector('.name');
+      const label = sq.querySelector('.label');
+      name.classList.remove('clip');
+      name.style.fontSize = '';
+      label.style.fontSize = '';
+      if (!phone) {
+        let size = parseFloat(getComputedStyle(name).fontSize);
+        while (name.scrollWidth > name.clientWidth + 0.5 && size > MIN_NAME_PX) {
+          size -= 0.5;
+          name.style.fontSize = size + 'px';
+        }
+        if (name.scrollWidth > name.clientWidth + 0.5) name.classList.add('clip');   // tap shows the full name
+        return;
       }
-      // Still too wide at the floor (tiny phones): fall back to an ellipsis; tap shows the full name.
-      if (el.scrollWidth > el.clientWidth + 0.5) el.classList.add('clip');
+      const bad = () => overflows(label) || Array.from(label.children).some(overflows);
+      let size = parseFloat(getComputedStyle(label).fontSize);
+      while (bad() && size > MIN_PHONE_PX) {
+        size -= 0.25;
+        label.style.fontSize = size + 'px';
+      }
+      if (bad()) name.classList.add('clip');
     });
   }
 
