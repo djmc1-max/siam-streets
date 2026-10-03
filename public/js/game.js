@@ -51,7 +51,7 @@
     Feed.add('🎮', 'Game on! ' + seats.length + ' players, ' + fmtBaht(settings.startingCash) + ' each');
     Feed.add('🎯', nameOf(0) + "'s turn");
 
-    run(myRun).catch((err) => { console.error(err); Feed.add('⚠️', 'Something went wrong: ' + err.message); });
+    window.SiamShow.play().then(() => { if (SiamGame.runId === myRun) return run(myRun); }).catch((err) => { console.error(err); Feed.add('⚠️', 'Something went wrong: ' + err.message); });
   }
 
   async function run(myRun) {

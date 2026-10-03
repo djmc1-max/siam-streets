@@ -1010,3 +1010,18 @@ body { overflow-x: hidden; }
   .fp-latest, .fp-chev { display: none; }
   .feed-panel > .feed, .feed-panel:not(.open) > .feed, .feed-panel.open > .feed { display: block; position: static; max-height: none; background: none; border: 0; border-radius: 0; box-shadow: none; }
 }
+
+/* ---------- game-show start: camera flashes (small, soft, at most ~2 per second; none with reduced motion) ---------- */
+.show { position: fixed; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; }
+.cam-flash {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 244, 205, .45) 22%, rgba(255, 244, 205, 0) 62%),
+    conic-gradient(from 0deg, rgba(255,255,255,.55), transparent 12%, rgba(255,255,255,.55) 25%, transparent 37%, rgba(255,255,255,.55) 50%, transparent 62%, rgba(255,255,255,.55) 75%, transparent 87%);
+  -webkit-mask-image: radial-gradient(circle, #000 0, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 0, #000 40%, transparent 72%);
+  opacity: 0;
+  animation: cam-flash .42s ease-out forwards;
+}
+@keyframes cam-flash { 0% { opacity: 0; transform: scale(.4) rotate(0); } 18% { opacity: .9; } 100% { opacity: 0; transform: scale(1.15) rotate(25deg); } }
