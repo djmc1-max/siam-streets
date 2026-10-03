@@ -1,7 +1,7 @@
 // Card reveal (Sections 20/21). The human's card waits for a tap; a bot's card continues on its own.
 (function () {
   const $ = (id) => document.getElementById(id);
-  const AUTO_MS = 2500;
+  const AUTO_MS = 4500;   // bots' cards stay up 2 s longer than before so the card can be read before its effect
 
   const DECKS = {
     surprise: { title: 'Surprise', icon: () => { const s = document.createElement('span'); s.className = 'card-q'; s.textContent = '❓'; return s; } },

@@ -10,14 +10,20 @@
   const Dice = window.SiamDice;
 
   const BOT_NAMES = ['Malee', 'Somsak', 'Niran', 'Suda', 'Anan'];
-  const botMgmt = { turn: -1, n: 0 };   // property-management actions a bot has taken this turn
+  const botMemo = { turn: -1, n: 0 };   // property-management actions a bot has taken this turn
+  const AUCTION_MS = 10000;             // the auction clock; restarts on every new bid
+  const DECISION_MS = [2000, 3000];     // a bot thinks 2-3 s before any real decision or trade reply
+  const BEAT_MS = 1000;                 // ...and about a second before the mechanical steps (roll, end turn)
 
   const SiamGame = {
     human: null,            // { name, token } from the landing screen
     engine: null,
     botRng: randomFloat,    // separate from the dice rng so bot choices never disturb the dice
     diceRng: randomFloat,
+    thinkRng: randomFloat,  // test hook: picks the 2-3 s thinking time
     humanId: 0,             // the human always sits in seat 0
+    botLevel: 'easy',
+    botDelays: [],          // { type, ms } of every bot pause (unscaled), for tests
     runId: 0
   };
 
@@ -39,7 +45,10 @@
     SiamGame.engine = engine;
     const myRun = ++SiamGame.runId;
 
-    const view = seats.map((s, i) => ({ id: i, name: s.name, isBot: s.isBot, icon: TOKENS.find((t) => t.id === s.tokenId).icon }));
+    SiamGame.botLevel = settings.botLevel === 'hard' ? 'hard' : 'easy';
+    SiamGame.botDelays.length = 0;
+    botMemo.turn = -1; botMemo.n = 0;
+    const view = seats.map((s, i) => ({ id: i, name: s.name, isBot: s.isBot, level: s.isBot ? SiamGame.botLevel : null, icon: TOKENS.find((t) => t.id === s.tokenId).icon }));
     Feed.clear();
     UI.clearOwners();
     UI.showPlay();
@@ -56,6 +65,7 @@
   async function run(myRun) {
     const engine = SiamGame.engine;
     while (SiamGame.runId === myRun && engine.state.phase !== 'over') {
+      if (engine.state.phase === 'auction') { await runAuction(myRun); continue; }
       const actor = engine.state.players[engine.availableActions().actor];
       const action = actor.isBot ? await botChoose(actor) : await humanChoose(actor);
       if (SiamGame.runId !== myRun) return;
@@ -92,14 +102,6 @@
     const e = SiamGame.engine;
     const st = e.state;
     if (st.trade) return window.SiamTrade.respond(st.trade);     // an offer (or counter-offer) is waiting for you
-    if (st.phase === 'auction') {
-      const a = st.auction;
-      return UI.awaitBid({
-        highBid: a.highBid,
-        highBidderName: a.highBidder === null ? '' : nameOf(a.highBidder),
-        cash: actor.cash
-      });
-    }
     const ctx = { jailed: actor.jailed, offer: st.pending ? BOARD[st.pending - 1] : null };
     if (st.phase === 'debt') ctx.debtText = debtBannerText(actor);
     else UI.setDebtBanner(null);
@@ -108,39 +110,62 @@
 
   async function botChoose(actor) {
     const e = SiamGame.engine;
-    const bot = window.SiamBot.easy;
+    const bot = window.SiamBot.forLevel(SiamGame.botLevel);
     UI.idle();
-    await sleep(bot.thinkMs);
-    const av = e.availableActions();
+    const action = window.SiamBot.choose(bot, e, actor.id, SiamGame.botRng, botMemo);
+    // Decisions and trade replies take a visible 2-3 s of "thinking"; rolling and ending the turn are quick.
+    const quick = action.type === 'roll' || action.type === 'end';
+    const ms = quick ? BEAT_MS : DECISION_MS[0] + SiamGame.thinkRng() * (DECISION_MS[1] - DECISION_MS[0]);
+    SiamGame.botDelays.push({ type: action.type, ms });
+    UI.setThinking(actor.id, !quick, actor.name);
+    await sleep(ms);
+    UI.setThinking(null, false);
+    return action;
+  }
 
-    if (e.state.trade) return { type: 'tradeReply', reply: bot.decideTrade(e, actor.id, e.state.trade, SiamGame.botRng) };
+  // ---------- the auction (Section 18): full-screen stage, open bidding, a clock that restarts on every bid ----------
+  async function runAuction(myRun) {
+    const e = SiamGame.engine;
+    const a = e.state.auction;
+    const Stage = window.SiamAuctionStage;
+    const bot = window.SiamBot.forLevel(SiamGame.botLevel);
+    const speed = window.SiamUtil.speed;
+    const clock = AUCTION_MS / speed;
+    const think = () => (DECISION_MS[0] + SiamGame.thinkRng() * (DECISION_MS[1] - DECISION_MS[0])) / speed;
+    const roster = e.state.players.filter((p) => !p.bankrupt).map((p) => ({ id: p.id, name: p.name, isBot: p.isBot, cash: p.cash, icon: TOKENS.find((t) => t.id === p.tokenId).icon }));
+    Stage.open({ sq: BOARD[a.square - 1], roster, decliner: a.decliner, humanId: SiamGame.humanId, clockMs: clock });
+    const bots = a.bidders.filter((id) => e.state.players[id].isBot);
+    const next = {};
+    const rethink = (now) => bots.forEach((id) => { next[id] = e.state.auction.highBidder === id ? Infinity : now + think(); });
+    rethink(performance.now());
 
-    // Easy bots tidy their properties at most three times a turn, before rolling or before ending the turn
-    if ((e.state.phase === 'roll' || e.state.phase === 'end') && av.canManage) {
-      if (botMgmt.turn !== e.state.turn) { botMgmt.turn = e.state.turn; botMgmt.n = 0; }
-      if (botMgmt.n < 3) {
-        const unm = bot.decideUnmortgage(e, actor.id);
-        if (unm) { botMgmt.n++; return { type: 'unmortgage', square: unm }; }
-        const bld = bot.decideBuild(e, actor.id, SiamGame.botRng);
-        if (bld) { botMgmt.n++; return { type: 'build', square: bld }; }
+    const applyBid = async (id, amount) => {
+      const events = e.bid(id, amount);
+      Stage.setClock(clock);            // every new bid restarts the countdown at once
+      await playEvents(events, myRun);
+      rethink(performance.now());
+    };
+
+    while (SiamGame.runId === myRun && Stage.isOpen() && Stage.remaining() > 0) {
+      const now = performance.now();
+      const mine = Stage.takeBid();
+      if (mine !== null && a.bidders.indexOf(SiamGame.humanId) !== -1) {
+        try { await applyBid(SiamGame.humanId, mine); } catch (err) { /* stale click: ignore */ }
+        continue;
       }
-    }
-
-    if (e.state.phase === 'debt') return bot.decideDebt(e, actor.id);
-
-    switch (e.state.phase) {
-      case 'roll':
-        if (av.canUseJailCard && bot.decideJail(e, actor.id) === 'card') return { type: 'jailCard' };
-        return av.canPayFine && bot.decideJail(e, actor.id) === 'pay' ? { type: 'fine' } : { type: 'roll' };
-      case 'action':
-        return { type: av.canBuy && bot.decideOffer(e, actor.id, SiamGame.botRng) === 'buy' ? 'buy' : 'auction' };
-      case 'auction': {
-        const bid = bot.decideBid(e, actor.id, SiamGame.botRng);
-        return bid === null ? { type: 'pass' } : { type: 'bid', amount: bid };
+      let bid = null;
+      for (const id of bots) {
+        if (now < next[id]) continue;
+        const amount = bot.decideBid(e, id, SiamGame.botRng);
+        if (amount !== null && amount > a.highBid && amount <= e.state.players[id].cash) { bid = { id, amount }; break; }
+        next[id] = Infinity;   // nothing more to say until somebody bids again
       }
-      default:
-        return { type: 'end' };
+      if (bid) { await applyBid(bid.id, bid.amount); continue; }
+      await new Promise((r) => setTimeout(r, 40));
     }
+    if (SiamGame.runId !== myRun) { Stage.close(); return; }
+    await playEvents(e.closeAuction(), myRun);
+    Stage.close();
   }
 
   const who = (creditor) => (typeof creditor === 'number' ? nameOf(creditor) : creditor === 'pot' ? 'the Songkran pot' : 'the bank');
@@ -159,7 +184,7 @@
     for (const ev of events) {
       if (SiamGame.runId !== myRun) return;
       await handle(ev);
-      if (ev.balances) UI.setBalances(ev.balances);
+      if (ev.balances) { UI.setBalances(ev.balances); if (window.SiamAuctionStage.isOpen()) ev.balances.forEach((c, id) => window.SiamAuctionStage.setCash(id, c)); }
       if (ev.debts) UI.setDebts(ev.debts);
     }
   }
@@ -204,24 +229,20 @@
         Feed.add('🔨', n + ' declined to buy ' + sqName(ev.square) + ' — auction!');
         break;
       case 'auctionStart':
-        UI.showAuction(sqName(ev.square), BOARD[ev.square - 1].price);
         Feed.add('🔨', 'Auction for ' + sqName(ev.square) + ': ' + ev.bidders.map(nameOf).join(', ') + ' can bid');
         break;
       case 'auctionBid':
-        UI.updateAuction(n + ' bid ' + fmtBaht(ev.amount));
+        window.SiamAuctionStage.setBid(ev.playerId, ev.amount);
         Feed.add('🔨', n + ' bid ' + fmtBaht(ev.amount) + ' on ' + sqName(ev.square));
-        break;
-      case 'auctionPass':
-        Feed.add('🔨', n + ' passed');
         break;
       case 'auctionWon':
         UI.setOwner(ev.square, ev.playerId);
-        UI.hideAuction();
         Feed.add('🛺', n + ' won ' + sqName(ev.square) + ' at auction for ' + fmtBaht(ev.amount));
+        await window.SiamAuctionStage.finish(ev.playerId, ev.amount);
         break;
       case 'auctionNoSale':
-        UI.hideAuction();
         Feed.add('🔨', 'No bids — ' + sqName(ev.square) + ' stays with the bank');
+        await window.SiamAuctionStage.finish(null);
         break;
       case 'rent': {
         const owner = nameOf(ev.ownerId);
@@ -307,6 +328,7 @@
         const bot = SiamGame.engine.state.players[ev.playerId].isBot;
         // the human's card waits for a tap before its effect is shown; bots' cards continue by themselves
         await window.SiamCardView.show({ deck: ev.deck, text: ev.text, playerName: n, waitForTap: !bot });
+        await sleep(600);       // a beat after the card closes, so the effect on the money is seen happening
         Feed.add(ev.deck === 'surprise' ? '❓' : '#chest', n + ' drew a ' + deckName + ' card — ' + ev.text);
         break;
       }
@@ -346,6 +368,8 @@
 
   function reset() {
     SiamGame.runId++;
+    window.SiamAuctionStage.close();
+    UI.setThinking(null, false);
     Tokens.reset();
     UI.clearOwners();
     Feed.clear();

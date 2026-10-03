@@ -32,6 +32,7 @@
       card.querySelector('.pc-token').textContent = p.icon;
       card.querySelector('.pc-jail').replaceChildren(window.SiamIcons.el('jail'));
       card.querySelector('.pc-name').textContent = p.name + (p.isBot ? ' 🤖' : '');
+      if (p.isBot && p.level) card.querySelector('.pc-info').appendChild(Object.assign(document.createElement('span'), { className: 'pc-level', textContent: p.level === 'hard' ? 'Hard bot' : 'Easy bot' }));
       panel.appendChild(card);
     });
     refreshCards();
@@ -253,58 +254,14 @@
     });
   }
 
-  // ---------- auction ----------
-  function showAuction(squareName, price) {
-    $('manage-bar').hidden = true;      // no property management during an auction
-    $('actions').hidden = true;
-    $('auction').hidden = false;
-    $('auction-title').textContent = '🔨 Auction: ' + squareName + ' (' + fmtBaht(price) + ')';
-    $('auction-status').textContent = 'Bidding is open';
-    $('auction-controls').hidden = true;
-  }
-  function updateAuction(text) { $('auction-status').textContent = text; }
-  function hideAuction() {
-    $('manage-bar').hidden = false;
-    $('auction').hidden = true;
-    $('actions').hidden = false;
-    if (resolveBid) resolveBid = null;
-  }
-
-  // The human's bid turn: resolves { type: 'bid', amount } or { type: 'pass' }.
-  function awaitBid(info) {
-    const input = $('bid-input');
-    $('auction-controls').hidden = false;
-    input.min = info.highBid + 1;
-    input.max = info.cash;
-    input.value = Math.min(info.cash, info.highBid + 10);
-    $('auction-status').textContent = (info.highBid ? 'High bid ' + fmtBaht(info.highBid) + ' by ' + info.highBidderName : 'No bids yet') +
-      ' · you have ' + fmtBaht(info.cash);
-    return new Promise((resolve) => { resolveBid = { resolve, info }; });
-  }
-
-  function bindAuction() {
-    const input = $('bid-input');
-    const add = (n) => { input.value = Math.min(Number(input.max) || Infinity, (Number(input.value) || 0) + n); };
-    $('bid-plus10').addEventListener('click', () => add(10));
-    $('bid-plus100').addEventListener('click', () => add(100));
-    $('bid-submit').addEventListener('click', () => {
-      if (!resolveBid) return;
-      const amount = Number(input.value);
-      const { info } = resolveBid;
-      if (!Number.isInteger(amount) || amount <= info.highBid || amount > info.cash) {
-        $('auction-status').textContent = 'Bid between ' + fmtBaht(info.highBid + 1) + ' and ' + fmtBaht(info.cash);
-        return;
-      }
-      const done = resolveBid.resolve; resolveBid = null;
-      $('auction-controls').hidden = true;
-      done({ type: 'bid', amount });
-    });
-    $('bid-pass').addEventListener('click', () => {
-      if (!resolveBid) return;
-      const done = resolveBid.resolve; resolveBid = null;
-      $('auction-controls').hidden = true;
-      done({ type: 'pass' });
-    });
+  // ---------- bot thinking indicator ----------
+  function setThinking(id, on, name) {
+    const c = id === null ? null : card(id);
+    document.querySelectorAll('.player-card.thinking').forEach((x) => x.classList.remove('thinking'));
+    if (c && on) c.classList.add('thinking');
+    const t = $('think');
+    t.hidden = !on;
+    t.textContent = on ? name + ' is thinking' : '';
   }
 
   // ---------- setup + winner ----------
@@ -322,7 +279,14 @@
       o.value = n; o.textContent = n;
       botSel.appendChild(o);
     }
-    $('btn-start').addEventListener('click', () => onStart({ startingCash: Number(cashSel.value), bots: Number(botSel.value) }));
+    const seg = $('setup-level');
+    seg.addEventListener('click', (e) => {
+      const b = e.target.closest('.seg-btn');
+      if (!b) return;
+      seg.querySelectorAll('.seg-btn').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+    });
+    const level = () => seg.querySelector('[aria-checked="true"]').dataset.level;
+    $('btn-start').addEventListener('click', () => onStart({ startingCash: Number(cashSel.value), bots: Number(botSel.value), botLevel: level() }));
   }
 
   function showSetup() {
@@ -330,7 +294,6 @@
     $('debt-banner').hidden = true;
     $('setup').hidden = false;
     $('actions').hidden = true;
-    $('auction').hidden = true;
     $('players').hidden = true;
   }
   function showPlay() {
@@ -355,7 +318,7 @@
       const center = document.querySelector('#board .board-center');
       const target = phone.matches ? dock : center;
       // order: setup, manage bar, actions, auction (in the dock the manage bar sits above the big buttons)
-      ['setup', 'debt-banner', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
+      ['setup', 'think', 'debt-banner', 'manage-bar', 'actions'].forEach((id) => target.appendChild($(id)));
       measure();
     };
     // The dock's height tells the layout how much room to leave, so the board fills the space between the
@@ -383,14 +346,13 @@
     initDock();
     initFeedPanel();
     bindButtons();
-    bindAuction();
     initSetup(onStart);
     showSetup();
   }
 
   window.SiamUI = {
     init, renderPlayers, setBalances, setJailCards, setDebts, setDebtBanner, confirm, setCurrent, setJailed, markBankrupt, setOwner, clearOwners,
-    idle, lock, awaitAction, submit, canAct, onChange: (fn) => changeHooks.push(fn), setLevel, setMortgaged, showAuction, updateAuction, hideAuction, awaitBid,
+    idle, lock, awaitAction, submit, canAct, onChange: (fn) => changeHooks.push(fn), setLevel, setMortgaged, setThinking,
     showSetup, showPlay, showWinner
   };
 })();

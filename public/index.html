@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/auction.css">
 </head>
 <body>
 
@@ -136,9 +137,16 @@
             <div id="setup" class="setup">
               <label>Starting ฿ <select id="setup-cash"></select></label>
               <label>Bots <select id="setup-bots"></select></label>
-              <span class="setup-level">Bot level: Easy</span>
+              <div class="setup-level-row"><span class="setup-level-label">Bot level</span>
+                <div id="setup-level" class="seg" role="radiogroup" aria-label="Bot difficulty">
+                  <button type="button" class="seg-btn" role="radio" data-level="easy" aria-checked="true">Easy</button>
+                  <button type="button" class="seg-btn" role="radio" data-level="hard" aria-checked="false">Hard</button>
+                </div>
+              </div>
               <button id="btn-start" class="btn btn-primary btn-start" type="button">Start game</button>
             </div>
+
+            <div id="think" class="think" role="status" hidden></div>
 
             <div id="debt-banner" class="debt-banner" role="alert" hidden></div>
 
@@ -157,17 +165,6 @@
               <button id="btn-bankrupt" class="btn btn-danger" type="button" hidden>Declare bankruptcy</button>
             </div>
 
-            <div id="auction" class="auction" hidden>
-              <div id="auction-title" class="auction-title"></div>
-              <div id="auction-status" class="auction-status"></div>
-              <div id="auction-controls" class="auction-controls" hidden>
-                <input id="bid-input" type="number" inputmode="numeric" step="1" min="1" aria-label="Your bid in Baht">
-                <button id="bid-plus10" class="btn btn-secondary" type="button">+10</button>
-                <button id="bid-plus100" class="btn btn-secondary" type="button">+100</button>
-                <button id="bid-submit" class="btn btn-primary" type="button">Bid</button>
-                <button id="bid-pass" class="btn btn-secondary" type="button">Pass</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -175,6 +172,8 @@
 
     <!-- Phones: the controls (setup / actions / auction) are moved in here by ui.js -->
     <div id="dock" class="dock"></div>
+
+    <div id="auction-stage" class="auction-stage" role="dialog" aria-modal="true" aria-label="Auction" hidden></div>
 
     <div id="trade-watch" class="trade-watch" role="status" aria-live="polite" hidden></div>
 
@@ -252,6 +251,7 @@
   <script src="js/tokens.js"></script>
   <script src="js/feed.js"></script>
   <script src="js/cardview.js"></script>
+  <script src="js/auctionstage.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/manager.js"></script>
   <script src="js/popup.js"></script>

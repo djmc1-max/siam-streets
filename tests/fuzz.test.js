@@ -119,9 +119,10 @@ test('fuzz: 300 random games never throw and always keep the invariants', () => 
         respond(g, rnd, stats);
       } else if (g.state.phase === 'auction') {
         const auc = g.state.auction;
-        const max = Math.min(p.cash, 3000);
-        if (rnd() < 0.5 && max > auc.highBid) g.bid(p.id, auc.highBid + 1 + Math.floor(rnd() * (max - auc.highBid)));
-        else g.pass(p.id);
+        const bidder = g.state.players[auc.bidders[Math.floor(rnd() * auc.bidders.length)]];
+        const max = Math.min(bidder.cash, 3000);
+        if (rnd() < 0.5 && max > auc.highBid) g.bid(bidder.id, auc.highBid + 1 + Math.floor(rnd() * (max - auc.highBid)));
+        else g.closeAuction();
       } else if (g.state.phase === 'debt') {
         // raise money (sell a building, else mortgage), or give up when there is nothing left / at random
         const pid = g.state.current;
