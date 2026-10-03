@@ -177,15 +177,16 @@ Build this as a web application using:
 
 | Color Group | House Cost | Hotel Cost |
 |---|---|---|
-| 🔴 Red | ฿500 | ฿500 |
-| 🟠 Orange | ฿500 | ฿500 |
-| 🟡 Yellow | ฿1,000 | ฿1,000 |
-| 🟢 Green | ฿1,000 | ฿1,000 |
-| 🔵 Blue | ฿1,500 | ฿1,500 |
-| 🟣 Purple | ฿1,500 | ฿1,500 |
-| 🟤 Brown | ฿2,000 | ฿2,000 |
-| 🩷 Pink | ฿2,000 | ฿2,000 |
+| 🔴 Red | ฿200 | ฿200 |
+| 🟠 Orange | ฿300 | ฿300 |
+| 🟡 Yellow | ฿500 | ฿500 |
+| 🟢 Green | ฿600 | ฿600 |
+| 🔵 Blue | ฿750 | ฿750 |
+| 🟣 Purple | ฿900 | ฿900 |
+| 🟤 Brown | ฿1,000 | ฿1,000 |
+| 🩷 Pink | ฿1,200 | ฿1,200 |
 
+- House costs are about 30–35% of the property's purchase price (a hotel costs the same as a house)
 - Player must own ALL properties in a color group before building
 - Must build evenly across the group
 - No limit on number of houses or hotels

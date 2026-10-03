@@ -52,9 +52,9 @@ test('resolving a debt: mortgage cash goes straight to the creditor and the turn
 test('resolving a debt by selling a house', () => {
   const g = rentShortfall(0); const own = (ids) => ids.forEach((i) => { g.state.owners[i] = 0; });
   own([2, 4]); g.state.levels[2] = 1; g.state.levels[4] = 1;
-  g.state.players[0].cash = 250; g.roll();                                 // rent 500, pays 250, owes 250
-  assert.equal(g.debtTotal(0), 250);
-  const ev = g.sellBuilding(0, 2);                                        // Red house cost 500 -> refund 250
+  g.state.players[0].cash = 400; g.roll();                                 // rent 500, pays 400, owes 100
+  assert.equal(g.debtTotal(0), 100);
+  const ev = g.sellBuilding(0, 2);                                        // Red house cost 200 -> refund 100
   assert.ok(types(ev).includes('debtResolved'));
   assert.equal(g.state.phase, 'end');
   assert.equal(g.state.players[0].cash, 0);

@@ -93,14 +93,14 @@
 
   // Build costs per colour group — GAME_DESIGN.md section 9 (a test re-parses the doc to verify).
   const BUILD_COST = {
-    red: { house: 500, hotel: 500 },
-    orange: { house: 500, hotel: 500 },
-    yellow: { house: 1000, hotel: 1000 },
-    green: { house: 1000, hotel: 1000 },
-    blue: { house: 1500, hotel: 1500 },
-    purple: { house: 1500, hotel: 1500 },
-    brown: { house: 2000, hotel: 2000 },
-    pink: { house: 2000, hotel: 2000 }
+    red: { house: 200, hotel: 200 },
+    orange: { house: 300, hotel: 300 },
+    yellow: { house: 500, hotel: 500 },
+    green: { house: 600, hotel: 600 },
+    blue: { house: 750, hotel: 750 },
+    purple: { house: 900, hotel: 900 },
+    brown: { house: 1000, hotel: 1000 },
+    pink: { house: 1200, hotel: 1200 }
   };
 
   // Surprise / Treasure decks — text from GAME_DESIGN.md sections 20 and 21 (a test re-parses the doc to verify).

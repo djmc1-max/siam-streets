@@ -162,9 +162,9 @@ test('Section 9: selling gives back 50% of the build cost; a hotel sells back to
 });
 
 test('building needs the cash — it can never push you into debt', () => {
-  const g = newGame(); own(g, 0, 'brown'); g.state.players[0].cash = 1999;
-  assert.throws(() => g.build(0, 32), /Needs ฿2,000/);
-  g.state.players[0].cash = 2000;
+  const g = newGame(); own(g, 0, 'brown'); g.state.players[0].cash = 999;
+  assert.throws(() => g.build(0, 32), /Needs ฿1,000/);
+  g.state.players[0].cash = 1000;
   g.build(0, 32);
   assert.equal(g.state.players[0].cash, 0);
 });
