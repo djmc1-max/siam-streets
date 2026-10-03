@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { GROUPS, TONES, PLAYERS } = require('../public/js/palette.js');
+const { GROUPS, TONES, PLAYERS, PROPERTY_FACE } = require('../public/js/palette.js');
 const { COLOR_GROUPS } = require('../public/js/data.js');
 
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
@@ -22,15 +22,23 @@ function minPair(list) {
   return min;
 }
 
-test('white text is readable (>= 4.5:1) on both stops of every group and tone', () => {
-  const all = Object.assign({}, GROUPS, TONES);
-  Object.keys(all).forEach((k) => all[k].forEach((c) => {
+test('white text is readable (>= 4.5:1) on both stops of every tone, the dark property face and the deep group shades', () => {
+  Object.keys(TONES).forEach((k) => TONES[k].forEach((c) => {
     assert.ok(contrastWhite(c) >= 4.5, k + ' ' + c + ' contrast ' + contrastWhite(c).toFixed(2)); }));
+  PROPERTY_FACE.forEach((c) => assert.ok(contrastWhite(c) >= 12, 'property face ' + c + ' contrast ' + contrastWhite(c).toFixed(2)));
+  Object.keys(GROUPS).forEach((k) => assert.ok(contrastWhite(GROUPS[k][1]) >= 4.5, k + ' deep shade'));
+});
+
+test('every group strip colour stands out clearly against the dark property face and is bright', () => {
+  Object.keys(GROUPS).forEach((k) => {
+    assert.ok(dE(GROUPS[k][0], PROPERTY_FACE[0]) >= 40, k + ' strip is too close to the face: ' + dE(GROUPS[k][0], PROPERTY_FACE[0]).toFixed(1));
+    assert.ok(lab(GROUPS[k][0])[0] >= 55, k + ' strip is too dark');
+  });
 });
 
 test('the 8 property groups stay clearly distinct', () => {
   assert.equal(Object.keys(GROUPS).length, 8);
-  assert.ok(minPair(Object.values(GROUPS).map((g) => g[0])) >= 25, 'min deltaE ' + minPair(Object.values(GROUPS).map((g) => g[0])));
+  assert.ok(minPair(Object.values(GROUPS).map((g) => g[0])) >= 30, 'min deltaE ' + minPair(Object.values(GROUPS).map((g) => g[0])));
 });
 
 test('the six player glow colours are all distinct and bright', () => {

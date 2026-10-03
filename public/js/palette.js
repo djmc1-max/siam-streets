@@ -10,17 +10,19 @@
     api.publish(document.documentElement);
   }
 })(typeof self !== 'undefined' ? self : this, function () {
-  // [top highlight, bottom depth]
+  // [bright strip colour, deep shade]. The bright colour is the strip across the top of a property square (the
+  // square itself is dark navy); the deep shade carries white text in popups and the auction card.
   const GROUPS = {
-    red:    ['#d0203a', '#8f0d24'],   // ruby
-    orange: ['#c0540a', '#8a3a04'],   // amber
-    yellow: ['#977000', '#6e4d00'],   // topaz
-    green:  ['#12823f', '#075a2c'],   // emerald
-    blue:   ['#2f63e8', '#1a3aa0'],   // sapphire
-    purple: ['#9040e0', '#5e21b0'],   // amethyst
-    brown:  ['#9a5530', '#5f3018'],   // bronze
-    pink:   ['#d01f80', '#8f1058']    // rose
+    red:    ['#ff3b4e', '#8f0d24'],
+    orange: ['#ff8c1a', '#8a3a04'],
+    yellow: ['#ffd426', '#6e4d00'],
+    green:  ['#28d27a', '#075a2c'],
+    blue:   ['#3b82ff', '#1a3aa0'],
+    purple: ['#b266ff', '#5e21b0'],
+    brown:  ['#cf8a4a', '#5f3018'],
+    pink:   ['#ff58b4', '#8f1058']
   };
+  const PROPERTY_FACE = ['#10223a', '#0a1524'];   // dark navy behind every property name
   // Squares that are not property groups.
   const TONES = {
     airport:  ['#2b7a8c', '#124857'],
@@ -34,7 +36,7 @@
     police:   ['#c01c2c', '#17338f']
   };
   // Glow colour per player seat (cyan, lime, magenta, white, solar orange, violet).
-  const PLAYERS = ['#00e5ff', '#b8ff2c', '#ff2bd6', '#ffffff', '#ff9d1a', '#c9a8ff'];
+  const PLAYERS = ['#00e5ff', '#b8ff2c', '#ff2bd6', '#ffffff', '#ff8f8f', '#c9a8ff'];
   const GOLD = '#f5c542';
 
   function publish(el) {
@@ -43,9 +45,10 @@
     Object.keys(TONES).forEach((t) => { set('--t-' + t + '-a', TONES[t][0]); set('--t-' + t + '-b', TONES[t][1]); });
     PLAYERS.forEach((c, i) => set('--p' + i, c));
     set('--gold', GOLD);
+    set('--prop-a', PROPERTY_FACE[0]); set('--prop-b', PROPERTY_FACE[1]);
   }
 
   const playerColor = (id) => PLAYERS[id % PLAYERS.length];
 
-  return { GROUPS, TONES, PLAYERS, GOLD, publish, playerColor };
+  return { GROUPS, TONES, PLAYERS, GOLD, PROPERTY_FACE, publish, playerColor };
 });

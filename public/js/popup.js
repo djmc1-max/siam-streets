@@ -44,13 +44,39 @@
     const owner = state.owners[sq.id];
     const full = owner !== undefined && Rules.ownsFullGroup(state, owner, sq.group);
     const wrap = el('div', 'sqp-rents');
-    const names = ['Base rent' + (full ? ' (full set ×2)' : ''), '1 house', '2 houses', '3 houses', '4 houses', 'Hotel'];
+    const names = ['Rent, no houses' + (full ? ' (full set ×2)' : ''), 'Rent, 1 house', 'Rent, 2 houses', 'Rent, 3 houses', 'Rent, 4 houses', 'Rent, hotel'];
     sq.rent.forEach((r, i) => {
       const row = el('div', 'sqp-rent' + (owner !== undefined && i === lvl ? ' now' : ''));
       const shown = i === 0 && full ? r * 2 : r;
       row.append(el('span', null, names[i]), el('span', null, fmtBaht(shown)));
       wrap.append(row);
     });
+    return wrap;
+  }
+
+  function facts(state, sq) {
+    const owner = state.owners[sq.id];
+    const rows = [['Purchase price', fmtBaht(sq.price)]];
+    if (sq.type === 'property') {
+      const cost = window.SiamData.BUILD_COST[sq.group];
+      rows.push(['House build cost', fmtBaht(cost.house)], ['Hotel build cost', fmtBaht(cost.hotel)]);
+    }
+    rows.push(['Mortgage value', fmtBaht(Rules.mortgageValue(sq))]);
+    rows.push(['Owner', owner === undefined ? 'Unowned' : (owner === me() ? 'You' : state.players[owner].name)]);
+    if (sq.type === 'property') {
+      const lvl = Rules.levelOf(state, sq.id);
+      rows.push(['Buildings', Rules.isMortgaged(state, sq.id) && owner !== undefined && lvl === 0 ? 'None (mortgaged)' : lvl === 0 ? 'None' : lvl === Rules.HOTEL ? 'Hotel' : lvl + (lvl === 1 ? ' house' : ' houses')]);
+    }
+    const wrap = el('div', 'sqp-facts');
+    rows.forEach(([k, v]) => { const r = el('div', 'sqp-fact'); r.append(el('span', null, k), el('strong', null, v)); wrap.append(r); });
+    return wrap;
+  }
+
+  function otherRents(sq) {
+    const wrap = el('div', 'sqp-rents');
+    const add = (k, v) => { const r = el('div', 'sqp-rent'); r.append(el('span', null, k), el('span', null, v)); wrap.append(r); };
+    if (sq.type === 'airport') Rules.AIRPORT_RENT.forEach((r, i) => add('Rent with ' + (i + 1) + (i === 0 ? ' airport' : ' airports'), fmtBaht(r)));
+    else { add('Rent with 1 Thai Massage', 'Dice roll × 40'); add('Rent with 2 Thai Massages', 'Dice roll × 100'); }
     return wrap;
   }
 
@@ -98,9 +124,8 @@
         else if (lvl > 0) status.append(el('span', 'sqp-tag good', lvl + (lvl === 1 ? ' house' : ' houses')));
       }
       body.append(status);
-      if (sq.type === 'property') body.append(rentTable(state, sq));
-      else if (sq.type === 'airport') body.append(el('div', 'sqp-sub', 'Rent grows with every airport the owner holds'));
-      else body.append(el('div', 'sqp-sub', 'Rent is a multiple of the dice roll'));
+      body.append(sq.type === 'property' ? rentTable(state, sq) : otherRents(sq));
+      body.append(facts(state, sq));
 
       if (owner === me()) {
         const mortgaged = Rules.isMortgaged(state, sq.id);

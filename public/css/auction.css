@@ -29,7 +29,7 @@
 @keyframes gavel { 0%, 100% { rotate: -18deg; } 50% { rotate: 14deg; } }
 
 .as-mid { width: min(100%, 880px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
-.as-prop { padding: 16px 14px; text-align: center; border-radius: 18px; background: linear-gradient(165deg, var(--a, #3a3f66), var(--b, #1a1d36)); box-shadow: 0 0 40px color-mix(in srgb, var(--a, #6a3be8) 60%, transparent), inset 0 0 0 2px rgba(255, 255, 255, .35); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.as-prop { padding: 16px 14px; text-align: center; border-radius: 18px; background: linear-gradient(165deg, var(--b, #1a1d36), #120a30); border-top: 8px solid var(--a, #3a3f66); box-shadow: 0 0 40px color-mix(in srgb, var(--a, #6a3be8) 60%, transparent), inset 0 0 0 2px rgba(255, 255, 255, .25); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
 .as-prop-kind { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; opacity: .95; }
 .as-prop-name { margin: 6px 0 10px; font-size: clamp(22px, 5vw, 32px); font-weight: 900; line-height: 1.1; }
 .as-prop-label { font-size: 12px; opacity: .85; }

@@ -56,6 +56,9 @@
       face.appendChild(window.SiamArt.use(art, 'corner-art'));
     } else if (sq.group) {
       tone = null;
+      const strip = document.createElement('div');   // the colour-group strip across the top of the dark square
+      strip.className = 'strip';
+      face.appendChild(strip);
     } else {
       tone = toneFor(sq);
       const icon = document.createElement('div');
@@ -90,7 +93,9 @@
     if (sq.group) {
       const bldg = document.createElement('div');
       bldg.className = 'bldg';
-      face.appendChild(bldg);
+      // side squares are short: their houses sit on the colour strip; top/bottom squares have a zone at the foot
+      if (pos.side === 'left' || pos.side === 'right') face.querySelector('.strip').appendChild(bldg);
+      else face.appendChild(bldg);
     }
     el.appendChild(face);
     return el;

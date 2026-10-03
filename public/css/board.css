@@ -12,8 +12,9 @@
   --bw: min(100cqw, calc(100dvh - 130px));   /* board width; layout.css overrides per breakpoint */
   --bh: var(--bw);
   --u: calc(var(--bw) / 100);
-  --bs: clamp(9px, calc(var(--bw) * .026), 20px);       /* house size in a 2x2 block (top/bottom squares) */
+  --bs: clamp(9px, calc(var(--bw) * .021), 18px);       /* house size in a 2x2 block (top/bottom squares) */
   --bz: calc(var(--bs) * 1.12);                           /* house size in a one-row strip (left/right squares) */
+  --strip-h: clamp(7px, calc(var(--bw) * .017), 14px);
   --fs: clamp(8px, calc(var(--bw) * .0142), 15px);       /* label font size, shrunk per square by fitNames() */
   width: var(--bw);
   height: var(--bh);
@@ -83,6 +84,13 @@
 .square.side-bottom .face { flex-direction: column-reverse; }
 .square.side-left .face,
 .square.side-right .face  { flex-direction: column; }
+
+/* ---------- property squares: dark navy face, bright colour strip across the top ---------- */
+.square[data-group] .face { background: linear-gradient(180deg, var(--prop-a), var(--prop-b)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 6px rgba(0, 0, 0, .4); }
+.square[data-group] .face::before { display: none; }
+.square[data-group] .strip { flex: 0 0 auto; height: var(--strip-h); background: linear-gradient(180deg, var(--a), color-mix(in srgb, var(--a) 72%, #000)); box-shadow: 0 1px 0 rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .45); }
+.square[data-group] .price { padding: 0; background: none; color: #ffd75a; font-weight: 800; font-size: 1em; }
+.square.side-bottom[data-group] .face { flex-direction: column; }
 
 /* ---------- labels ---------- */
 .square .label {
@@ -154,17 +162,22 @@
   align-content: center;
   height: calc(var(--bs) * 2 + 5px);
 }
-/* left/right squares: one row along the bottom */
+/* left/right squares: the houses sit on the colour strip itself, on a dark backing so green stays visible */
+.square.side-left[data-group] .strip, .square.side-right[data-group] .strip { height: calc(var(--bz) + 5px); display: flex; align-items: center; justify-content: center; }
 .square.side-left .bldg, .square.side-right .bldg {
   grid-template-columns: repeat(4, var(--bz));
   grid-auto-rows: var(--bz);
   justify-content: center;
   align-content: center;
-  height: calc(var(--bz) + 4px);
+  height: calc(var(--bz) + 3px);
+  padding: 0 4px;
+  border-radius: 999px;
 }
+.square.side-left .bldg:not(:empty), .square.side-right .bldg:not(:empty) { background: rgba(8, 14, 26, .78); }
+.square.side-left .bldg:empty, .square.side-right .bldg:empty { background: none; }
 .b3d { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); animation: b-pop .45s cubic-bezier(.2, 1.4, .4, 1) both; }
 .b3d.hotel { grid-column: 1 / -1; grid-row: 1 / -1; width: calc(var(--bs) * 1.7); height: calc(var(--bs) * 2.05); }
-.square.side-left .b3d.hotel, .square.side-right .b3d.hotel { width: calc(var(--bz) * 1.1); height: calc(var(--bz) * 1.3); margin-top: -2px; }
+.square.side-left .b3d.hotel, .square.side-right .b3d.hotel { width: calc(var(--bz) * .95); height: calc(var(--bz) * 1.1); margin: 0; }
 @keyframes b-pop { from { transform: scale(0) translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ---------- ownership: the square glows in its owner's colour ---------- */
@@ -226,6 +239,17 @@
   box-shadow: inset 0 0 0 1px rgba(245, 197, 66, .35), inset 0 0 30px rgba(0, 0, 0, .5);
 }
 
+/* wider screens: top/bottom squares keep their houses in one row, which leaves more room for the name */
+@media (min-width: 601px) {
+  .square.side-top .bldg, .square.side-bottom .bldg {
+    --r: calc(var(--bw) * .0185);
+    grid-template-columns: repeat(4, var(--r));
+    grid-auto-rows: var(--r);
+    height: calc(var(--r) + 5px);
+  }
+  .square.side-top .b3d.hotel, .square.side-bottom .b3d.hotel { width: calc(var(--r) * 1.15); height: calc(var(--r) * 1.4); margin-top: -3px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .square[data-owner]::after, .b3d { animation: none; }
 }
@@ -237,6 +261,7 @@
     --ch: 94px;                       /* depth of the top/bottom squares */
     --bs: 9.5px;
     --bz: 10px;
+    --strip-h: 6px;
     --fs: 9.5px;
     grid-template-columns: var(--cw) repeat(9, 1fr) var(--cw);
     grid-template-rows: var(--ch) repeat(9, minmax(0, 1fr)) var(--ch);

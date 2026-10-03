@@ -137,15 +137,20 @@ body { overflow-x: hidden; }
 .header-logo { background: linear-gradient(180deg, #fff6cf, #f5c542 60%, #b56f10); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-family: "Cinzel Decorative", Georgia, serif; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 
 .slogan {
-  margin: 6px 0 18px;
+  margin: 4px 0 20px;
   text-align: center;
-  color: #e7d9ff;
   font-family: "Cinzel Decorative", Georgia, serif;
   font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 12px !important;
-  font-size: clamp(15px, 4vw, 18px);
+  font-size: clamp(24px, 6.6vw, 28px);
+  line-height: 1.2;
+  letter-spacing: .02em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, #fff3b0 0%, #f9d04a 45%, #e0a124 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #f5c542;
+  filter: drop-shadow(0 2px 0 rgba(60, 30, 0, .8)) drop-shadow(0 0 12px rgba(245, 197, 66, .35));
 }
 
 .field-label {
@@ -249,8 +254,10 @@ body { overflow-x: hidden; }
   position: relative;
   width: var(--s);
   height: var(--s);
-  perspective: calc(var(--s) * 6);
+  perspective: calc(var(--s) * 3.6);
+  perspective-origin: 96% 4%;   /* a slight look from above-left so the top and side edges still show */
 }
+.die3d:nth-child(2) { perspective-origin: 4% 4%; }
 .die3d:nth-child(1) { --rx: -26deg; --ry: -34deg; --rz: -4deg; }
 .die3d:nth-child(2) { --rx: -30deg; --ry:  38deg; --rz:  5deg; }
 
@@ -269,8 +276,11 @@ body { overflow-x: hidden; }
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
+  /* At rest the die sits flat: the number face looks straight at you. The tilt below is used only while it tumbles. */
+  transform: none;
+  transition: transform .45s cubic-bezier(.2, .8, .2, 1);
 }
+.die3d.rolling .cube { transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)); transition: none; }
 
 /* .orient turns the cube so the wanted value faces the viewer (used by Phase 2's roll). */
 .orient {
@@ -303,11 +313,11 @@ body { overflow-x: hidden; }
     inset 0 calc(var(--s) * -.05) calc(var(--s) * .05) rgba(255, 255, 255, .6);
 }
 .face-1 { transform: translateZ(var(--half)); }
-.face-6 { transform: rotateY(180deg) translateZ(var(--half)); filter: brightness(.82); }
-.face-2 { transform: rotateY(90deg) translateZ(var(--half)); filter: brightness(.86); }
-.face-5 { transform: rotateY(-90deg) translateZ(var(--half)); filter: brightness(.86); }
-.face-3 { transform: rotateX(90deg) translateZ(var(--half)); filter: brightness(1.04); }
-.face-4 { transform: rotateX(-90deg) translateZ(var(--half)); filter: brightness(.78); }
+.face-6 { transform: rotateY(180deg) translateZ(var(--half)); }
+.face-2 { transform: rotateY(90deg) translateZ(var(--half)); }
+.face-5 { transform: rotateY(-90deg) translateZ(var(--half)); }
+.face-3 { transform: rotateX(90deg) translateZ(var(--half)); }
+.face-4 { transform: rotateX(-90deg) translateZ(var(--half)); }
 
 /* Recessed pips; the single pip on the 1 face is red, as on Thai dice. */
 .pip {

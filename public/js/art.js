@@ -6,7 +6,7 @@
   <pattern id="a-check" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#fff"/><rect width="8" height="8" fill="#111"/><rect x="8" y="8" width="8" height="8" fill="#111"/></pattern>
   <linearGradient id="a-start-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19a357"/><stop offset="1" stop-color="#054a26"/></linearGradient>
   <linearGradient id="a-prison-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9741a"/><stop offset="1" stop-color="#7a3304"/></linearGradient>
-  <linearGradient id="a-songkran-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3aa0ff"/><stop offset="1" stop-color="#0a3f94"/></linearGradient>
+  <linearGradient id="a-songkran-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2eb4ff"/><stop offset="1" stop-color="#0a62d6"/></linearGradient>
   <linearGradient id="a-police-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0243a"/><stop offset=".5" stop-color="#6b1d8a"/><stop offset="1" stop-color="#1c3fb8"/></linearGradient>
   <linearGradient id="a-pole" x1="0" x2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#b87410"/></linearGradient>
   <linearGradient id="a-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6f8ff"/><stop offset="1" stop-color="#4fc3ff"/></linearGradient>
@@ -60,17 +60,8 @@
   </symbol>
   <symbol id="art-songkran" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
     <rect width="100" height="100" fill="url(#a-songkran-bg)"/>
-    <circle cx="50" cy="42" r="34" fill="url(#a-halo)"/>
-    <g fill="url(#a-water)" stroke="#0a3f94" stroke-width="1.200">
-      <path id="a-drop" d="M50 8C60 24 66 32 50 46 34 32 40 24 50 8Z"/>
-      <path d="M24 26C33 38 38 44 26 54 14 44 18 38 24 26Z" transform="rotate(-24 24 40)"/>
-      <path d="M76 26C85 38 90 44 78 54 66 44 70 38 76 26Z" transform="rotate(24 76 40)"/>
-      <path d="M12 46C17 53 20 57 13 62 6 57 8 53 12 46Z" transform="rotate(-50 12 54)"/>
-      <path d="M88 46C93 53 96 57 89 62 82 57 84 53 88 46Z" transform="rotate(50 88 54)"/>
-    </g>
-    <g fill="#fff" opacity=".85"><circle cx="35" cy="14" r="2.500"/><circle cx="66" cy="12" r="3"/><circle cx="82" cy="22" r="2"/><circle cx="18" cy="20" r="2"/></g>
-    <path d="M0 62Q12 52 25 62T50 62 75 62 100 62V100H0Z" fill="#5cc8ff" opacity=".95"/>
-    <path d="M0 70Q12 62 25 70T50 70 75 70 100 70V100H0Z" fill="#1f86e8"/>
+    <circle cx="50" cy="36" r="30" fill="#fff" opacity=".18"/>
+    <text x="50" y="52" text-anchor="middle" font-size="46" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">💦</text>
   </symbol>
   <symbol id="art-police" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
     <rect width="100" height="100" fill="url(#a-police-bg)"/>

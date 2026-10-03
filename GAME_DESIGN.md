@@ -38,26 +38,28 @@ Build this as a web application using:
 - **Stage:** a deep purple-indigo stage background (not flat navy); the board sits in a dark frame with a thin gold rim so the colours stay vivid
 - Board sits around the edges of the screen as a square (a tall rectangle on phones — see below)
 - Center of the board contains the Siam Streets emblem logo (top), two 3D dice (center), the bot "thinking" pill, and the action buttons / Start game settings. **The activity feed is no longer in the board centre** (see Sections 25 and 35)
-- **Jewel palette (single source: `palette.js`).** Every property square is painted across its whole face in the rich gradient of its colour group, with a light bevel and a glossy top sheen — not just a coloured strip. Names are crisp bold white with a dark shadow; the price sits in a small dark pill in gold. A test checks white-on-colour contrast of at least 4.5:1 on both gradient stops and that the 8 groups stay clearly distinct.
+- **Property squares (RichUp style).** Every property square has a **dark navy face** (`#10223a` → `#0a1524`) with a clean, bright **colour strip across its top** showing the colour group. The property name is bold white on the navy; the price sits below it in smaller **gold** text. On the left and right sides the strip also carries the houses and hotel (on a dark backing so green stays visible); on the top and bottom rows the buildings sit in a row or 2×2 block at the foot of the square. Colours come from `palette.js`. Tests check that every strip colour stands out from the navy face, that the 8 groups stay clearly distinct, and that white text is readable on the face.
 
-| Group | Jewel | Light stop → deep stop |
+| Group | Strip colour | Deep shade (popup / auction header) |
 |---|---|---|
-| Red (Bangkok Party) | Ruby | #d0203a → #8f0d24 |
-| Orange (East Coast) | Amber | #c0540a → #8a3a04 |
-| Yellow (South Islands) | Topaz | #977000 → #6e4d00 |
-| Green (North) | Emerald | #12823f → #075a2c |
-| Blue (Central/Historic) | Sapphire | #2f63e8 → #1a3aa0 |
-| Purple (Gulf South) | Amethyst | #9040e0 → #5e21b0 |
-| Brown (Mid Bangkok) | Bronze | #9a5530 → #5f3018 |
-| Pink (Premium Bangkok) | Rose | #d01f80 → #8f1058 |
+| Red (Bangkok Party) | #ff3b4e | #8f0d24 |
+| Orange (East Coast) | #ff8c1a | #8a3a04 |
+| Yellow (South Islands) | #ffd426 | #6e4d00 |
+| Green (North) | #28d27a | #075a2c |
+| Blue (Central/Historic) | #3b82ff | #1a3aa0 |
+| Purple (Gulf South) | #b266ff | #5e21b0 |
+| Brown (Mid Bangkok) | #cf8a4a | #5f3018 |
+| Pink (Premium Bangkok) | #ff58b4 | #8f1058 |
 
-- **Other squares:** airports steel-teal with a plane; Thai Massage turquoise with a lotus; Income Tax a coin and Luxury Tax a gem on crimson; Surprise indigo with a star; Treasure gold-bronze with the treasure-chest icon (lid slightly open, warm glow, coins spilling out)
-- **Corner squares** are individually illustrated and larger than regular squares: **Start** — a checkered flag on emerald; **In Prison** — the jail-bars icon on orange; **Songkran** — a water splash with droplets on blue; **Go To Prison** — a police siren with a skull badge on a red/blue flash background. The same icons appear in the activity feed and player cards.
-- **Player ownership colours.** Each seat has its own glow colour, separate from the property colours and used on the player card, the token ring and the board: cyan `#00e5ff`, lime `#b8ff2c`, magenta `#ff2bd6`, white `#ffffff`, solar orange `#ff9d1a`, lavender `#c9a8ff`. A property square glows in its owner's colour (outer glow, inner light and a small owner badge on its outer corner). A mortgaged square is dimmed and hatched with a weaker glow; the glow disappears when the property returns to the bank.
-- **3D buildings.** Houses are small isometric **green** houses (up to 4, drawn as a 2×2 block on top/bottom squares and a row on side squares); a hotel is a taller **red** tower with a gold flag that replaces the four houses. They pop in when built and stay inside their square at every screen size.
+- **Other squares keep full colour backgrounds:** airports steel-teal with a plane; Thai Massage turquoise with a lotus; Income Tax a coin and Luxury Tax a gem on crimson; Surprise indigo with a star; Treasure gold-bronze with the treasure-chest icon (lid slightly open, warm glow, coins spilling out)
+- **Corner squares** are individually illustrated and larger than regular squares: **Start** — a checkered flag on emerald; **In Prison** — the jail-bars icon on orange; **Songkran** — a simple 💦 water-splash icon on bright blue, with "SONGKRAN" and "Collect the pot"; **Go To Prison** — a police siren with a skull badge on a red/blue flash background. The same icons appear in the activity feed and player cards.
+- **Player ownership colours.** Each seat has its own glow colour, separate from the property colours and used on the player card, the token ring and the board: cyan `#00e5ff`, lime `#b8ff2c`, magenta `#ff2bd6`, white `#ffffff`, coral `#ff8f8f`, lavender `#c9a8ff`. A property square glows in its owner's colour (outer glow, inner light and a small owner badge on its outer corner). A mortgaged square is dimmed and hatched with a weaker glow; the glow disappears when the property returns to the bank.
+- **3D buildings.** Houses are small isometric **green** houses (up to 4, placed as described above); a hotel is a taller **red** tower with a gold flag that replaces the four houses. They pop in when built and stay inside their square at every screen size.
 - **Phone board (screens up to 600px wide).** The board is a tall rectangle (about 1.5–1.7× as tall as it is wide) with deep edge squares so every one of the 40 names and prices is readable. On the top and bottom rows the label is rotated to run along the depth of the square; left and right squares use horizontal text with a building row at the foot. Font sizes are fitted per square (no clipping, no ellipsis); an automated test measures all 40 squares at 320, 360, 375, 390, 412 and 430px wide, with and without buildings. Minimum text size is 8px (7px on 320px-wide phones, the one documented exception). Very short phones may scroll a little to see the whole board.
 - **Phone controls:** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row) sit in a fixed dock at the bottom of the screen in easy one-handed thumb reach — large buttons, always visible. The colour legend is removed on phones (the squares carry the colour).
 - Clean, modern, readable font; rounded corners on squares.
+- **Dice:** the dice tumble in 3D while rolling, then settle flat: the number face looks straight at the player (square-on, fully readable) with only a slim edge of the die showing at the side.
+- **Landing slogan:** "Can you rule the streets of Siam?" sits directly under the logo in bold gold lettering, 24–28px, visible as soon as the page loads.
 - **Logo:** a luxury emblem — a glossy deep-purple ellipse with a double gold ring, soft light rays and sparkles, "SIAM STREETS" in engraved gold lettering (Cinzel Decorative, bundled), a small lotus ornament between the words. Used large on the landing screen (over a purple spotlight backdrop) and compact in the board centre.
 
 ---
@@ -469,7 +471,7 @@ Other events in the same style: `🏦` mortgaged / unmortgaged, `💵` sold a ho
 | Crowd applause | Plays once (about 3 seconds, swelling then fading) when transitioning from the setup/lobby screen into the live board |
 | Camera shutter | A soft click with each camera flash during the start sequence |
 
-**Game-show start.** When the host presses Start, the board is revealed under a spotlight while a crowd applauds and small camera-flash starbursts pop at random places on screen for about 2.8 seconds; the first turn begins afterwards. Photosensitivity safety: flashes are small and soft (never full-screen), never more than 3 per second (the game keeps to about 2), and users who prefer reduced motion get a calm golden fade with no flashes. The mute button silences the sounds.
+**Game-show start.** The applause and camera flashes play only at the moment the host presses **Start game** on the setup panel and the live board takes over — never on the landing / name-entry screen and never while the setup panel is still showing. When the host presses Start, the board is revealed under a spotlight while a crowd applauds and small camera-flash starbursts pop at random places on screen for about 2.8 seconds; the first turn begins afterwards. Photosensitivity safety: flashes are small and soft (never full-screen), never more than 3 per second (the game keeps to about 2), and users who prefer reduced motion get a calm golden fade with no flashes. The mute button silences the sounds.
 
 ---
 
@@ -632,7 +634,7 @@ Display as Coming Soon at launch. Rules visible to players:
 
 The **Properties** and **Trade** buttons sit beside the main buttons (in the board centre on larger screens, in the bottom dock on phones). Property management is unavailable during auctions (the full-screen stage covers the board).
 
-**Square popup.** Tapping any square opens a popup (a bottom sheet on phones): for **your own** property it shows large (at least 52px) **Buy House / Sell House / Mortgage / Unmortgage** buttons with their prices and, when blocked, the reason; for anyone else's or an unowned property it shows the owner, buildings, mortgage status and the rent table with the current level highlighted. Actions run only on your own turn, through the normal turn loop. Tapping Income Tax still shows its full rule: "10% of your cash (max ฿2,000)". The **Properties** manager remains as an overview and the home of Declare Bankruptcy.
+**Square popup.** Tapping **any** square opens a popup (a bottom sheet on phones) with large, readable text. A property shows its name and colour group, **purchase price, rent with no houses, 1, 2, 3 and 4 houses and with a hotel (current level highlighted), house build cost, hotel build cost, mortgage value, current owner and current buildings**. Airports list the rent for 1–4 airports owned; Thai Massage lists its dice-roll multipliers; the other squares explain themselves. For **your own** property the popup also has large (at least 52px) **Buy House / Sell House / Mortgage / Unmortgage** buttons with their prices and, when blocked, the reason. Actions run only on your own turn, through the normal turn loop. Tapping Income Tax still shows its full rule: "10% of your cash (max ฿2,000)". The **Properties** manager remains as an overview and the home of Declare Bankruptcy.
 
 ---
 

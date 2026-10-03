@@ -59,6 +59,8 @@
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = (reduced ? 200 : 950 + index * 200) / window.SiamUtil.speed;
 
+    die.classList.add('rolling');                       // tilted view while it tumbles ...
+    setTimeout(() => die.classList.remove('rolling'), duration * 0.62);   // ... then it settles flat, number facing you
     orient.style.transition = 'none';
     orient.dataset.value = value; // the CSS final orientation sits under the animation
     if (!orient.animate) { orient.style.transition = ''; return Promise.resolve(); }
