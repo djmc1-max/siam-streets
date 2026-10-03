@@ -38,17 +38,20 @@ Build this as a web application using:
 - Dark navy/black background — same as RichUp.io
 - Board sits around the edges of the screen as a square
 - Center of the board contains:
-  - Siam Streets logo (top)
-  - Two 3D dice (center)
-  - Live activity feed below the dice (scrolling log of game events)
-  - Start game button before game begins
+  - Siam Streets logo (top) — the luxury emblem: a glossy deep-purple ellipse with a double gold ring, soft light rays and sparkles, "SIAM STREETS" in engraved gold lettering and a small lotus ornament
+  - Two 3D dice, a little larger than before now that the feed has moved out
+  - The Roll Dice / End Turn buttons, Properties and Trade (on phones these sit in the bottom dock)
+  - Start game button and settings before the game begins
+  - **The live activity feed is NOT in the board centre any more** — it is a collapsible panel at the top left of the screen (Section 25)
 - Property squares have colored region indicators
 - Each square shows property name and price in Thai Baht ฿
 - Clean, modern, readable font
 - Rounded corners on property squares
 - Corner squares are larger than regular squares
 - Square icons: **Treasure** squares use a custom gold treasure-chest icon (lid slightly open, warm glow, coins spilling out); the **In Prison** and **Go To Prison** corners use a jail-bars icon (a dark cell with vertical steel bars). The same icons appear wherever those squares are referenced in the UI (activity feed, player cards).
-- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. On **tall phones** (720px or taller) the space above the board becomes a large activity feed (the feed moves out of the board center; the logo and dice grow to fill it), so players can see many more recent events; the board sits directly above the dock. On **shorter phones** the feed stays in the board center and the board is centered vertically between the top bar (header, colour strip, players) and the dock with equal spacing above and below. Tablet and desktop keep the feed and the controls in the center of the board.
+- **Phone board (screens up to 600px wide):** the board is a **tall rectangle** (up to 1.7× as tall as it is wide, never shorter than about 550px) with **deep edge squares** — about 64px on the left and right, about 80px on the top and bottom rows — so all 40 names and prices are readable. Names are white, about 9–10px; on the **top and bottom rows the name and price are rotated** to run along the depth of the square (reading bottom-to-top), on the sides they stay horizontal. The font is fitted per square (no clipping, no ellipsis), smallest text 8px on phones 360px wide or more (7px on 320px-wide phones). The colour legend is hidden on phones (the coloured strips carry it); very short phones may scroll a little to see the whole board. An automated test measures all 40 squares at 320, 360, 375, 390, 412 and 430px wide, with and without buildings.
+- **Songkran square** shows the live pot under "Collect the pot" in gold (Section 10).
+- **Phone layout (screens up to 600px wide):** the action buttons (Roll Dice, Buy, Auction, End Turn, the Properties / Trade row and the auction bid controls) sit in a fixed dock at the bottom of the screen, in easy one-handed thumb reach — large buttons, always visible without scrolling. The activity feed is the pull-down bar at the top (Section 25). Tablet and desktop keep the controls in the center of the board.
 
 ---
 
@@ -405,7 +408,7 @@ All tax payments **and fines** go into the **Songkran pot**: the two tax squares
 
 ## 25. LIVE ACTIVITY FEED
 
-A continuously scrolling log in the center of the board showing all game events in real time:
+A continuously scrolling log showing all game events in real time. **Placement:** a collapsible panel at the **top left** of the screen, never in the board centre. On screens 1100px wide or more it is a sidebar to the left of the board, always visible, newest entry at the bottom. On narrower screens (tablets and phones) it is a one-line **pull-down bar** at the top showing the latest event: tap it to open the full list, tap again to collapse it.
 
 - 🛺 [Player] bought [Property] for ฿[amount]
 - ✈️ [Player] passed Start and collected ฿2,000
@@ -448,7 +451,8 @@ Other events in the same style: `🏦` mortgaged / unmortgaged, `💵` sold a ho
 | Trade completed | Success sound |
 | Auction won | Gavel sound |
 | Intro music | Short Thai-style theme, 8-9 seconds — plays on landing screen |
-| Crowd applause | Plays once when transitioning from lobby into the live board |
+| Crowd applause | Plays once (about 3 seconds) when Start game is pressed and the setup panel gives way to the live board — never on the landing / name screen |
+| Camera shutter | A soft click with each camera flash during that transition |
 
 ---
 
@@ -696,7 +700,7 @@ This is the very first screen a player sees when they open Siam Streets.
 **Layout and flow:**
 
 1. **Intro music** plays automatically on screen load — short Thai-style theme, 8-9 seconds
-2. **Siam Streets logo and slogan** displayed prominently: *"Can you rule the streets of Siam?"*
+2. **Siam Streets logo and slogan** displayed prominently: *"Can you rule the streets of Siam?"* — the slogan sits directly under the logo in **bold gold lettering, 24–28px**, visible the moment the page loads
 3. **Name entry field** — player types in their display name
 4. **Character selection** — player picks their token from the free starter set (Elephant, Tuk Tuk, Moped, Straw Hat); premium tokens shown but locked/greyed out
 5. **How to Play blurb** — 3 sentences:
@@ -706,12 +710,13 @@ This is the very first screen a player sees when they open Siam Streets.
 6. **Continue/Play button** — takes player to room selection screen
 
 **Transition into the game:**
-- When host starts the game, play **crowd applause** sound as screen transitions from lobby into the live board
+- When the host presses **Start game** (on the setup panel) and the live board takes over, play **crowd applause** and show **camera-flash** effects for about 3 seconds; the first turn begins afterwards. Nothing plays on the landing / name-entry screen. Flashes are small and soft, never more than 3 per second, and are skipped for users who prefer reduced motion; the mute button silences the sound.
 
 ---
 
-*Document version: 4 — Ready for Claude Code*
+*Document version: 5 — Ready for Claude Code*
 *Changes in v3: Blue-group square 25 is now Lopburi (฿2,400); square 5 is Income Tax and shows only "10%" (tap card shows the full rule); treasure-chest and jail-bars icons; phone layout with a bottom dock and, on tall phones, a large activity feed above the board (Section 3).*
 *Changes in v4 (Phase 3): full-set rent doubling (Section 6); building, mortgage and jail-card rules (Sections 9, 13, 15); partial-payment debt system (Sections 16, 17); trade rules (Section 19); how cards work (Sections 20, 21); Properties manager, Trade and confirmed bankruptcy (Section 35).*
+*Changes in v5: luxury logo in the board centre and larger dice (Section 3); activity feed moves to a top-left collapsible panel (Sections 3, 25); live Songkran pot on its square, fed by tax and fines, with a feed line for every deposit (Sections 10, 13, 20, 21, 25); bigger landing slogan (Section 39); lower house costs, about 30–35% of the property price (Section 9); applause and camera flashes at Start game (Sections 26, 39); tall phone board with deep, rotated-label edge squares (Section 3).*
 *Game: Siam Streets | siamstreets.io*
 *Slogan: Can you rule the streets of Siam?*
