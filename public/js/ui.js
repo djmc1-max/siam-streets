@@ -25,7 +25,7 @@
       const card = document.createElement('div');
       card.className = 'player-card';
       card.dataset.player = p.id;
-      card.style.setProperty('--ring', window.SiamTokens.COLORS[p.id % window.SiamTokens.COLORS.length]);
+      card.style.setProperty('--ring', window.SiamPalette.playerColor(p.id));
       card.innerHTML = '<span class="pc-token"></span><span class="pc-info"><span class="pc-name"></span><span class="pc-cash"></span></span>' +
         '<span class="pc-meta"><span class="pc-props"></span><span class="pc-free" hidden title="Get Out of Jail Free cards"></span><span class="pc-jail" hidden></span></span>' +
         '<span class="pc-debt" hidden></span>';
@@ -132,11 +132,17 @@
     if (!sq) return;
     const old = sq.querySelector('.owner-badge');
     if (old) old.remove();
-    if (playerId === null) { delete owners[squareId]; setLevel(squareId, 0); setMortgaged(squareId, false); } else {
+    if (playerId === null) {
+      delete owners[squareId];
+      delete sq.dataset.owner;
+      setLevel(squareId, 0);
+      setMortgaged(squareId, false);
+    } else {
       owners[squareId] = playerId;
+      sq.dataset.owner = playerId;          // board.css lights the square in this player's colour
       const badge = document.createElement('span');
       badge.className = 'owner-badge';
-      badge.style.setProperty('--ring', window.SiamTokens.COLORS[playerId % window.SiamTokens.COLORS.length]);
+      badge.style.setProperty('--ring', window.SiamPalette.playerColor(playerId));
       badge.textContent = players[playerId].icon;
       badge.title = 'Owned by ' + players[playerId].name;
       sq.appendChild(badge);
@@ -145,21 +151,29 @@
   }
   const squareEl = (id) => document.querySelector('#board .square[data-id="' + id + '"]');
 
-  // Houses (1-4 small green blocks) or a hotel (one red block) drawn on the colour strip.
+  // Houses (1-4 green 3D houses) or a hotel (one red 3D hotel) drawn in the square's building area.
   function setLevel(squareId, level) {
     const sq = squareEl(squareId);
     if (!sq) return;
-    const strip = sq.querySelector('.strip');
-    if (!strip) return;
-    strip.replaceChildren();
+    const bldg = sq.querySelector('.bldg');
+    if (!bldg) return;
+    const before = Number(sq.dataset.level || 0);
     sq.dataset.level = level || 0;
+    if (before === (level || 0) && bldg.children.length) return;
+    bldg.replaceChildren();
+    bldg.removeAttribute('title');
     if (!level) return;
-    if (level >= 5) {
-      const h = document.createElement('b'); h.className = 'hotel'; h.title = 'Hotel'; strip.appendChild(h);
-    } else {
-      for (let i = 0; i < level; i++) { const h = document.createElement('i'); h.className = 'house'; strip.appendChild(h); }
-      strip.title = level + (level === 1 ? ' house' : ' houses');
-    }
+    const add = (kind) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'b3d ' + kind);
+      svg.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', kind === 'hotel' ? '#b-hotel' : '#b-house');
+      svg.appendChild(use);
+      bldg.appendChild(svg);
+    };
+    if (level >= 5) { add('hotel'); bldg.title = 'Hotel'; }
+    else { for (let i = 0; i < level; i++) add('house'); bldg.title = level + (level === 1 ? ' house' : ' houses'); }
   }
   function setMortgaged(squareId, on) {
     const sq = squareEl(squareId);
@@ -167,6 +181,7 @@
   }
   function clearOwners() {
     document.querySelectorAll('#board .owner-badge').forEach((b) => b.remove());
+    document.querySelectorAll('#board .square[data-owner]').forEach((s) => delete s.dataset.owner);
     document.querySelectorAll('#board .square').forEach((s) => { s.classList.remove('mortgaged'); if (s.dataset.level && s.dataset.level !== '0') setLevel(s.dataset.id, 0); });
     owners = {};
   }
@@ -336,30 +351,37 @@
   function initDock() {
     const dock = $('dock');
     const phone = window.matchMedia('(max-width: 600px)');
-    // Tall phones have room to spare above the board, so the feed moves there and grows (see style.css).
-    const tallPhone = window.matchMedia('(max-width: 600px) and (min-height: 720px)');
     const place = () => {
       const center = document.querySelector('#board .board-center');
       const target = phone.matches ? dock : center;
-      (tallPhone.matches ? $('feed-slot') : center).appendChild($('feed'));
       // order: setup, manage bar, actions, auction (in the dock the manage bar sits above the big buttons)
       ['setup', 'debt-banner', 'manage-bar', 'actions', 'auction'].forEach((id) => target.appendChild($(id)));
-      $('feed').scrollTop = $('feed').scrollHeight;
       measure();
     };
-    // The dock's height tells the layout how much room to leave, so the board stays centred between
-    // the top bar and the dock even when the dock grows (e.g. the auction bid controls).
+    // The dock's height tells the layout how much room to leave, so the board fills the space between the
+    // top bar and the dock even when the dock grows (e.g. the auction bid controls).
     const measure = () => {
       document.documentElement.style.setProperty('--dock-h', (phone.matches ? dock.offsetHeight : 0) + 'px');
+      window.SiamBoard.fitNames();
     };
     if (window.ResizeObserver) new ResizeObserver(measure).observe(dock);
     phone.addEventListener('change', place);
-    tallPhone.addEventListener('change', place);
     place();
+  }
+
+  // Under 1100px the activity feed is a one-line ticker; tapping it drops the full list down.
+  function initFeedPanel() {
+    const panel = $('feed-panel');
+    const btn = $('feed-toggle');
+    const set = (open) => { panel.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) $('feed').scrollTop = $('feed').scrollHeight; };
+    btn.addEventListener('click', () => set(!panel.classList.contains('open')));
+    document.addEventListener('click', (e) => { if (!panel.contains(e.target)) set(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') set(false); });
   }
 
   function init(onStart) {
     initDock();
+    initFeedPanel();
     bindButtons();
     bindAuction();
     initSetup(onStart);

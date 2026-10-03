@@ -1,0 +1,110 @@
+// Board artwork: SVG <symbol>s for the corner squares, the other square icons and the 3D buildings.
+// Injected once at load; squares reference them with <use href="#art-...">.
+(function () {
+  const defs = `
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <pattern id="a-check" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#fff"/><rect width="8" height="8" fill="#111"/><rect x="8" y="8" width="8" height="8" fill="#111"/></pattern>
+  <linearGradient id="a-start-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19a357"/><stop offset="1" stop-color="#054a26"/></linearGradient>
+  <linearGradient id="a-prison-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9741a"/><stop offset="1" stop-color="#7a3304"/></linearGradient>
+  <linearGradient id="a-songkran-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3aa0ff"/><stop offset="1" stop-color="#0a3f94"/></linearGradient>
+  <linearGradient id="a-police-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0243a"/><stop offset=".5" stop-color="#6b1d8a"/><stop offset="1" stop-color="#1c3fb8"/></linearGradient>
+  <linearGradient id="a-pole" x1="0" x2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#b87410"/></linearGradient>
+  <linearGradient id="a-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6f8ff"/><stop offset="1" stop-color="#4fc3ff"/></linearGradient>
+  <linearGradient id="a-skull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d0e0"/></linearGradient>
+  <radialGradient id="a-siren-r" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ffd0d0"/><stop offset=".35" stop-color="#ff3b4a"/><stop offset="1" stop-color="#8f0a18"/></radialGradient>
+  <radialGradient id="a-siren-b" cx=".6" cy=".3" r=".8"><stop offset="0" stop-color="#d0e2ff"/><stop offset=".35" stop-color="#3b6bff"/><stop offset="1" stop-color="#0c2a8f"/></radialGradient>
+  <radialGradient id="a-halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="a-coin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#f6c53a"/><stop offset="1" stop-color="#b87410"/></linearGradient>
+  <linearGradient id="a-gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8ffff"/><stop offset=".5" stop-color="#5de0ff"/><stop offset="1" stop-color="#1d7fd8"/></linearGradient>
+  <linearGradient id="a-star" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7c0"/><stop offset="1" stop-color="#ffb52e"/></linearGradient>
+
+  <!-- ===== corners (square art, drawn to fill the whole corner) ===== -->
+  <symbol id="art-start" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <rect width="100" height="100" fill="url(#a-start-bg)"/>
+    <g fill="#fff" opacity=".13"><path d="M50 50 0 0h20zM50 50 40 0h20zM50 50 80 0H100zM50 50 100 30v20zM50 50 0 40v20z"/></g>
+    <rect x="24" y="8" width="5" height="64" rx="2.500" fill="url(#a-pole)"/><circle cx="26.500" cy="8" r="4.500" fill="url(#a-coin)"/>
+    <path d="M29 12C44 4 58 22 84 11V47C58 58 44 40 29 49Z" fill="url(#a-check)" stroke="#111" stroke-width="1.500" stroke-linejoin="round"/>
+    <path d="M29 12C44 4 58 22 84 11V22C58 33 44 15 29 24Z" fill="#fff" opacity=".18"/>
+    <path d="M16 78h68" stroke="#f6c53a" stroke-width="3" stroke-linecap="round" opacity=".9"/><path d="M76 72l10 6-10 6z" fill="#f6c53a"/>
+  </symbol>
+  <symbol id="art-prison" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <rect width="100" height="100" fill="url(#a-prison-bg)"/>
+    <svg x="19" y="3" width="62" height="62" viewBox="0 0 64 64"><use href="#icon-jail"/></svg>
+  </symbol>
+  <symbol id="art-songkran" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <rect width="100" height="100" fill="url(#a-songkran-bg)"/>
+    <circle cx="50" cy="42" r="34" fill="url(#a-halo)"/>
+    <g fill="url(#a-water)" stroke="#0a3f94" stroke-width="1.200">
+      <path id="a-drop" d="M50 8C60 24 66 32 50 46 34 32 40 24 50 8Z"/>
+      <path d="M24 26C33 38 38 44 26 54 14 44 18 38 24 26Z" transform="rotate(-24 24 40)"/>
+      <path d="M76 26C85 38 90 44 78 54 66 44 70 38 76 26Z" transform="rotate(24 76 40)"/>
+      <path d="M12 46C17 53 20 57 13 62 6 57 8 53 12 46Z" transform="rotate(-50 12 54)"/>
+      <path d="M88 46C93 53 96 57 89 62 82 57 84 53 88 46Z" transform="rotate(50 88 54)"/>
+    </g>
+    <g fill="#fff" opacity=".85"><circle cx="35" cy="14" r="2.500"/><circle cx="66" cy="12" r="3"/><circle cx="82" cy="22" r="2"/><circle cx="18" cy="20" r="2"/></g>
+    <path d="M0 62Q12 52 25 62T50 62 75 62 100 62V100H0Z" fill="#5cc8ff" opacity=".95"/>
+    <path d="M0 70Q12 62 25 70T50 70 75 70 100 70V100H0Z" fill="#1f86e8"/>
+  </symbol>
+  <symbol id="art-police" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <rect width="100" height="100" fill="url(#a-police-bg)"/>
+    <g opacity=".22" fill="#fff"><path d="M50 26 0 0H16zM50 26 100 0H84z"/></g>
+    <circle cx="50" cy="24" r="24" fill="url(#a-halo)"/>
+    <rect x="30" y="29" width="40" height="8" rx="2.500" fill="#1b2140" stroke="#9aa7c7" stroke-width="1.300"/>
+    <path d="M33 30C33 11 67 11 67 30Z" fill="url(#a-siren-r)" stroke="#fff" stroke-width="1.300"/>
+    <path d="M50 30C50 11 67 11 67 30Z" fill="url(#a-siren-b)"/>
+    <path d="M50 12V30" stroke="#fff" stroke-width="1.300" opacity=".8"/>
+    <g stroke="#fff" stroke-width="2.600" stroke-linecap="round"><path d="M22 18 15 12M25 8 21 2M78 18 85 12M75 8 79 2"/></g>
+    <g transform="translate(50 52)">
+      <circle r="13" fill="#111632" stroke="#fff" stroke-width="1.800"/>
+      <path d="M-7 -1.500C-7 -9 7 -9 7 -1.500V2C7 4.500 5 5 5 5V8H-5V5S-7 4.500-7 2Z" fill="url(#a-skull)"/>
+      <circle cx="-3" cy="-1" r="2.300" fill="#111632"/><circle cx="3" cy="-1" r="2.300" fill="#111632"/><path d="M0 1.500l-1.200 2.400h2.400z" fill="#111632"/>
+      <path d="M-2.200 5v3M0 5v3M2.200 5v3" stroke="#111632" stroke-width=".8"/>
+    </g>
+  </symbol>
+
+  <!-- ===== other square icons (48x48) ===== -->
+  <symbol id="icon-plane" viewBox="0 0 48 48"><path d="M44 8c1.500-1.500-1-4-3-2L30 17 8 11 5 14l17 9-8 9-7-1-2 3 8 3 3 8 3-2-1-7 9-8 9 17 3-3-5-23z" fill="#fff" stroke="#0d3340" stroke-width="1.800" stroke-linejoin="round"/></symbol>
+  <symbol id="icon-lotus" viewBox="0 0 48 48"><g stroke="#7a1f55" stroke-width="1.200"><path d="M24 6C16 14 16 28 24 38 32 28 32 14 24 6Z" fill="#fff"/><path d="M24 38C12 36 5 28 4 18 15 19 21 26 24 38Z" fill="#ffc2e0"/><path d="M24 38C36 36 43 28 44 18 33 19 27 26 24 38Z" fill="#ffc2e0"/><path d="M24 40C18 40 12 37 8 32 16 32 21 35 24 40ZM24 40C30 40 36 37 40 32 32 32 27 35 24 40Z" fill="#ff8cc6"/></g></symbol>
+  <symbol id="icon-star" viewBox="0 0 48 48"><circle cx="24" cy="25" r="22" fill="url(#a-halo)"/><path d="M24 4l5.400 12.600L43 18l-10 9 3 13.500L24 33l-12 7.500L15 27 5 18l13.600-1.400z" fill="url(#a-star)" stroke="#8a520a" stroke-width="1.800" stroke-linejoin="round"/><text x="24" y="30" text-anchor="middle" font-size="16" font-weight="900" fill="#5a1b9c" font-family="system-ui,sans-serif">?</text><g fill="#fff"><path d="M40 4l1.200 3 3 1.200-3 1.200L40 12.400l-1.200-3-3-1.200 3-1.200z"/><path d="M7 34l.9 2.100 2.100.9-2.100.9L7 40l-.9-2.100L4 37l2.100-.9z"/></g></symbol>
+  <symbol id="icon-coin" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="url(#a-coin)" stroke="#8a520a" stroke-width="2"/><circle cx="24" cy="24" r="15" fill="none" stroke="#8a520a" stroke-width="1.500" opacity=".7"/><text x="24" y="31" text-anchor="middle" font-size="22" font-weight="900" fill="#7a4a06" font-family="system-ui,sans-serif">฿</text></symbol>
+  <symbol id="icon-gem" viewBox="0 0 48 48"><path d="M13 7h22l10 12-21 23L3 19z" fill="url(#a-gem)" stroke="#0e4a7e" stroke-width="2" stroke-linejoin="round"/><path d="M3 19h42M13 7l-3 12 14 23M35 7l3 12-14 23M19 7l-3 12 8 23M29 7l3 12-8 23" fill="none" stroke="#fff" stroke-width="1.200" opacity=".7"/></symbol>
+
+  <!-- ===== 3D buildings ===== -->
+  <symbol id="b-house" viewBox="0 0 40 40">
+    <ellipse cx="20" cy="37" rx="17" ry="3.200" fill="#000" opacity=".35"/>
+    <path d="M7 20 20 27v11L7 31Z" fill="#43d96f" stroke="#064e22" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M20 27 33 20v11L20 38Z" fill="#14803a" stroke="#064e22" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M2.500 19.500 20 4l0 23Z" fill="#a8f5c0" stroke="#064e22" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M20 4 37.500 19.500 20 27Z" fill="#1fb457" stroke="#064e22" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M11 26l5 2.500v7L11 33Z" fill="#fff6b0" stroke="#064e22" stroke-width=".8"/>
+    <path d="M25 29l5-2.500V31L25 33.500Z" fill="#7be0ff" stroke="#064e22" stroke-width=".8"/>
+  </symbol>
+  <symbol id="b-hotel" viewBox="0 0 40 48">
+    <ellipse cx="20" cy="45" rx="17" ry="3.200" fill="#000" opacity=".4"/>
+    <path d="M6 18 20 25v20L6 38Z" fill="#f04a4a" stroke="#4d0a0a" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M20 25 34 18v20L20 45Z" fill="#a51818" stroke="#4d0a0a" stroke-width="1.100" stroke-linejoin="round"/>
+    <path d="M6 18 20 11 34 18 20 25Z" fill="#ffb0b0" stroke="#4d0a0a" stroke-width="1.100" stroke-linejoin="round"/>
+    <g fill="#ffe27a" stroke="#4d0a0a" stroke-width=".6"><path d="M9 24l3 1.500v4L9 28ZM14 27l3 1.500v4L14 31ZM9 33l3 1.500v4L9 37ZM14 35.500l3 1.500v4l-3-1.500Z"/></g>
+    <g fill="#ffcf4a" stroke="#4d0a0a" stroke-width=".6"><path d="M23 28.500l3-1.500v4l-3 1.500ZM28 26l3-1.500v4l-3 1.500ZM23 37l3-1.500v4L23 41ZM28 34.500l3-1.500v4l-3 1.500Z"/></g>
+    <path d="M13 12.500 20 9l7 3.500v4L20 20l-7-3.500Z" fill="#f04a4a" stroke="#4d0a0a" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M20 9V3" stroke="#f6c53a" stroke-width="1.400"/><path d="M20 3l7 2.500-7 2.500Z" fill="#f6c53a" stroke="#8a520a" stroke-width=".6"/>
+  </symbol>
+</defs></svg>`;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = defs;
+  document.body.insertBefore(wrap.firstElementChild, document.body.firstChild);
+
+  const NS = 'http://www.w3.org/2000/svg';
+  // <svg class="art art-NAME"><use href="#art-NAME"/></svg>
+  function use(symbolId, cls) {
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'art ' + (cls || symbolId));
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', '#' + symbolId);
+    svg.appendChild(u);
+    return svg;
+  }
+  window.SiamArt = { use };
+})();

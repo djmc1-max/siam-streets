@@ -2,7 +2,7 @@
 // and moved one square at a time.
 (function () {
   const STEP_MS = 220;
-  const COLORS = ['#ffffff', '#22d3ee', '#fb7185', '#a3e635', '#c084fc', '#fbbf24'];
+  const COLORS = window.SiamPalette.PLAYERS;
   // offsets (in --u units) so pieces sharing a square do not hide each other
   const SPREAD = [[0, 0], [-1.7, -1.7], [1.7, -1.7], [-1.7, 1.7], [1.7, 1.7], [0, 0]];
 

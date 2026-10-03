@@ -5,14 +5,14 @@
   else root.SiamData = api;                                               // browser
 })(typeof self !== 'undefined' ? self : this, function () {
   const COLOR_GROUPS = {
-    red:    { name: 'Bangkok Party',    color: '#e5484d' },
-    orange: { name: 'East Coast',       color: '#f5892a' },
-    yellow: { name: 'South Islands',    color: '#f2c94c' },
-    green:  { name: 'North',            color: '#3fb950' },
-    blue:   { name: 'Central/Historic', color: '#3b82f6' },
-    purple: { name: 'Gulf South',       color: '#a855f7' },
-    brown:  { name: 'Mid Bangkok',      color: '#a0673a' },
-    pink:   { name: 'Premium Bangkok',  color: '#f472b6' }
+    red:    { name: 'Bangkok Party',    color: '#d0203a' },
+    orange: { name: 'East Coast',       color: '#c0540a' },
+    yellow: { name: 'South Islands',    color: '#977000' },
+    green:  { name: 'North',            color: '#12823f' },
+    blue:   { name: 'Central/Historic', color: '#2f63e8' },
+    purple: { name: 'Gulf South',       color: '#9040e0' },
+    brown:  { name: 'Mid Bangkok',      color: '#9a5530' },
+    pink:   { name: 'Premium Bangkok',  color: '#d01f80' }
   };
 
   // Rent by improvement level [base, 1 house, 2, 3, 4, hotel] — GAME_DESIGN.md section 6.
